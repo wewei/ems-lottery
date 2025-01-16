@@ -1,6 +1,5 @@
 import express, { Request, Response, RequestHandler } from 'express';
 import Prize from '../models/Prize';
-import User from '../models/User';
 import DrawRecord from '../models/DrawRecord';
 import mongoose from 'mongoose';
 import { authenticateToken } from '../middleware/auth';
@@ -10,46 +9,41 @@ const router = express.Router();
 // 给所有抽奖路由添加认证中间件
 router.use('/', authenticateToken as RequestHandler);
 
+interface Winner {
+  alias: string;
+  nickname: string;
+}
+
 // 抽奖
 router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     const { prizeId } = req.params;
+    const { winners } = req.body as { winners: Winner[] };
     
-    // 获取奖项信息
-    const prize = await Prize.findById(prizeId).session(session);
+    // 获取奖项信息和已抽取数量
+    const [prize, drawnCount] = await Promise.all([
+      Prize.findById(prizeId),
+      DrawRecord.aggregate([
+        { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
+        { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+      ])
+    ]);
+
     if (!prize) {
-      await session.abortTransaction();
       return res.status(404).json({ message: '奖项不存在' });
     }
 
+    const remaining = prize.totalQuantity - (drawnCount[0]?.total || 0);
+
     // 检查剩余数量
-    if (prize.remaining < prize.drawQuantity) {
-      await session.abortTransaction();
+    if (remaining < prize.drawQuantity) {
       return res.status(400).json({ message: '奖品数量不足' });
     }
 
-    // 获取所有已激活但未中奖的用户
-    const winners = await User.aggregate([
-      { 
-        $match: { 
-          isActive: true,
-          // 这里可以添加其他条件，比如未中过奖的用户
-        } 
-      },
-      { $sample: { size: prize.drawQuantity } }
-    ]).session(session);
-
-    if (winners.length < prize.drawQuantity) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: '可参与用户数量不足' });
+    // 验证中奖用户数量
+    if (!winners || winners.length !== prize.drawQuantity) {
+      return res.status(400).json({ message: '中奖用户数量不正确' });
     }
-
-    // 更新奖品剩余数量
-    prize.remaining -= prize.drawQuantity;
-    await prize.save({ session });
 
     // 记录抽奖结果
     const drawRecord = new DrawRecord({
@@ -62,20 +56,15 @@ router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
         nickname: w.nickname
       }))
     });
-    await drawRecord.save({ session });
+    await drawRecord.save();
 
-    await session.commitTransaction();
     res.json({ 
-      winners: winners.map(w => ({
-        alias: w.alias,
-        nickname: w.nickname
-      }))
+      winners,
+      remaining: remaining - prize.drawQuantity 
     });
   } catch (err) {
-    await session.abortTransaction();
+    console.error('抽奖失败:', err);
     res.status(500).json({ message: '抽奖失败' });
-  } finally {
-    session.endSession();
   }
 }) as RequestHandler);
 

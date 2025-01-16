@@ -16,7 +16,6 @@ export interface IPrize extends Document {
   };
   totalQuantity: number;    // 总数量
   drawQuantity: number;     // 每次抽取数量
-  remaining: number;        // 剩余数量
 }
 
 const PrizeSchema: Schema = new Schema({
@@ -45,11 +44,6 @@ const PrizeSchema: Schema = new Schema({
     type: Number, 
     required: true,
     min: 1 
-  },
-  remaining: { 
-    type: Number, 
-    required: true,
-    min: 0 
   }
 });
 

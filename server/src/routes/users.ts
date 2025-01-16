@@ -347,6 +347,28 @@ router.post('/admin/activate/:id', (async (req: Request, res: Response) => {
   }
 }) as RequestHandler);
 
+// 获取用户统计信息
+router.get('/stats', (async (req: Request, res: Response) => {
+  try {
+    const activeUserCount = await User.countDocuments({ isActive: true });
+    res.json({ activeUserCount });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 获取激活用户列表
+router.get('/active', (async (req: Request, res: Response) => {
+  try {
+    const users = await User.find({ isActive: true })
+      .select('nickname alias')
+      .sort({ nickname: 1 });
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
 // ... 其他路由
 
 export default router; 

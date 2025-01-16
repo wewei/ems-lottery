@@ -139,9 +139,9 @@ const PrizeManagement: React.FC = () => {
               <TableCell>名称</TableCell>
               <TableCell>图片</TableCell>
               <TableCell>总数量</TableCell>
-              <TableCell>抽取数量</TableCell>
+              <TableCell>每次抽取数量</TableCell>
               <TableCell>剩余数量</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell align="center">操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -149,11 +149,18 @@ const PrizeManagement: React.FC = () => {
               <TableRow key={prize._id}>
                 <TableCell>{prize.name}</TableCell>
                 <TableCell>
-                  <img 
-                    src={prize.image} 
-                    alt={prize.name} 
-                    style={{ width: 50, height: 50, objectFit: 'cover' }} 
-                  />
+                  {prize.image && (
+                    <img
+                      src={prize.image}
+                      alt={prize.name}
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        objectFit: 'cover',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  )}
                 </TableCell>
                 <TableCell>{prize.totalQuantity}</TableCell>
                 <TableCell>{prize.drawQuantity}</TableCell>
@@ -188,13 +195,25 @@ const PrizeManagement: React.FC = () => {
       <Dialog open={createDialog} onClose={() => setCreateDialog(false)}>
         <DialogTitle>新增奖项</DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {imagePreview && (
+              <Box sx={{ textAlign: 'center', mb: 2 }}>
+                <img
+                  src={imagePreview}
+                  alt="预览"
+                  style={{
+                    maxWidth: '200px',
+                    maxHeight: '200px',
+                    objectFit: 'contain'
+                  }}
+                />
+              </Box>
+            )}
             <TextField
-              fullWidth
               label="名称"
               value={newPrize.name}
               onChange={(e) => setNewPrize(prev => ({ ...prev, name: e.target.value }))}
-              sx={{ mb: 2 }}
+              fullWidth
             />
             <TextField
               fullWidth
@@ -225,15 +244,6 @@ const PrizeManagement: React.FC = () => {
                 onChange={handleImageUpload}
               />
             </Button>
-            {imagePreview && (
-              <Box sx={{ mb: 2, mt: 2 }}>
-                <img 
-                  src={imagePreview} 
-                  alt="预览" 
-                  style={{ width: 100, height: 100, objectFit: 'cover' }} 
-                />
-              </Box>
-            )}
           </Box>
         </DialogContent>
         <DialogActions>

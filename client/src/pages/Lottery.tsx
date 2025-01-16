@@ -22,8 +22,13 @@ interface Prize {
   remaining: number;
 }
 
+interface Stats {
+  activeUserCount: number;
+}
+
 const Lottery: React.FC = () => {
   const [prizes, setPrizes] = useState<Prize[]>([]);
+  const [stats, setStats] = useState<Stats>({ activeUserCount: 0 });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,10 +40,14 @@ const Lottery: React.FC = () => {
 
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    const fetchPrizes = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('/api/prizes');
-        setPrizes(response.data.prizes);
+        const [prizesRes, statsRes] = await Promise.all([
+          axios.get('/api/prizes'),
+          axios.get('/api/users/stats')
+        ]);
+        setPrizes(prizesRes.data.prizes);
+        setStats(statsRes.data);
       } catch (err: any) {
         if (err.response?.status === 401) {
           localStorage.removeItem('token');
@@ -48,7 +57,7 @@ const Lottery: React.FC = () => {
       }
     };
 
-    fetchPrizes();
+    fetchData();
 
     return () => {
       delete axios.defaults.headers.common['Authorization'];
@@ -62,6 +71,9 @@ const Lottery: React.FC = () => {
         <Box sx={{ mt: 4, mb: 4 }}>
           <Typography variant="h4" gutterBottom align="center">
             抽奖
+          </Typography>
+          <Typography variant="subtitle1" align="center" color="text.secondary">
+            当前已激活用户: {stats.activeUserCount} 人
           </Typography>
         </Box>
         <Grid container spacing={3}>
@@ -100,9 +112,11 @@ const Lottery: React.FC = () => {
                     variant="contained"
                     fullWidth
                     sx={{ mt: 2 }}
-                    disabled={prize.remaining === 0}
+                    disabled={prize.remaining === 0 || stats.activeUserCount < prize.drawQuantity}
                   >
-                    {prize.remaining > 0 ? '开始抽奖' : '已抽完'}
+                    {prize.remaining === 0 ? '已抽完' : 
+                     stats.activeUserCount < prize.drawQuantity ? 
+                     '激活用户不足' : '开始抽奖'}
                   </Button>
                 </CardContent>
               </Card>

@@ -2,6 +2,8 @@ import express from 'express';
 import { Request, Response, RequestHandler } from 'express';
 import Prize from '../models/Prize';
 import multer from 'multer';
+import mongoose from 'mongoose';
+import DrawRecord from '../models/DrawRecord';
 
 // 配置内存存储
 const storage = multer.memoryStorage();
@@ -24,6 +26,19 @@ const upload = multer({
 
 const router = express.Router();
 
+async function calculateRemaining(prizeId: string): Promise<number> {
+  const [prize, drawnCount] = await Promise.all([
+    Prize.findById(prizeId),
+    DrawRecord.aggregate([
+      { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
+      { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+    ])
+  ]);
+
+  if (!prize) return 0;
+  return prize.totalQuantity - (drawnCount[0]?.total || 0);
+}
+
 router.get('/', (async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -40,14 +55,17 @@ router.get('/', (async (req: Request, res: Response) => {
       Prize.countDocuments()
     ]);
 
-    // 处理图片数据
-    const processedPrizes = prizes.map(prize => ({
-      ...prize,
-      image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null
-    }));
+    // 计算每个奖项的剩余数量
+    const prizesWithRemaining = await Promise.all(
+      prizes.map(async prize => ({
+        ...prize,
+        image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null,
+        remaining: await calculateRemaining(prize._id.toString())
+      }))
+    );
 
     res.json({
-      prizes: processedPrizes,
+      prizes: prizesWithRemaining,
       total,
       page,
       pages: Math.ceil(total / limit)
@@ -173,13 +191,25 @@ router.delete('/:id', (async (req: Request, res: Response) => {
 // 获取单个奖项
 router.get('/:id', (async (req: Request, res: Response) => {
   try {
-    const prize = await Prize.findById(req.params.id).lean().exec();
+    const prizeId = req.params.id;
+    const [prize, drawnCount] = await Promise.all([
+      Prize.findById(prizeId).lean().exec(),
+      DrawRecord.aggregate([
+        { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
+        { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+      ])
+    ]);
+
     if (!prize) {
       return res.status(404).json({ message: '奖项不存在' });
     }
+
+    const remaining = prize.totalQuantity - (drawnCount[0]?.total || 0);
+
     // 处理图片数据
     const processedPrize = {
       ...prize,
+      remaining,
       image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null
     };
     res.json({ prize: processedPrize });

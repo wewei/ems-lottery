@@ -16,7 +16,8 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Typography
+  Typography,
+  Switch
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -147,6 +148,19 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleToggleActive = async (user: User) => {
+    try {
+      if (user.isActive) {
+        await axios.post(`/api/users/deactivate/${user.alias}`);
+      } else {
+        await axios.post(`/api/users/admin/activate/${user._id}`);
+      }
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || `${user.isActive ? '取消激活' : '激活'}失败`);
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -209,8 +223,8 @@ const UserManagement: React.FC = () => {
               </TableCell>
               <TableCell>别名</TableCell>
               <TableCell>昵称</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell align="center">激活状态</TableCell>
+              <TableCell align="center">操作</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -231,11 +245,21 @@ const UserManagement: React.FC = () => {
                 </TableCell>
                 <TableCell>{user.alias}</TableCell>
                 <TableCell>{user.nickname}</TableCell>
-                <TableCell>{user.isActive ? '已激活' : '未激活'}</TableCell>
-                <TableCell>
+                <TableCell align="center">
+                  <Switch
+                    checked={user.isActive}
+                    onChange={() => handleToggleActive(user)}
+                    color="primary"
+                  />
+                </TableCell>
+                <TableCell align="center">
                   <IconButton
                     color="error"
-                    onClick={() => setDeleteDialog(true)}
+                    onClick={() => {
+                      setSelectedUsers([user._id]);
+                      setDeleteDialog(true);
+                    }}
+                    title="删除用户"
                   >
                     <DeleteIcon />
                   </IconButton>
