@@ -1,12 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent } from '@mui/material';
 
 interface SlotMachineProps {
-  users: Array<{ nickname: string }>;
+  users: Array<{
+    nickname: string;
+    alias: string;
+  }>;
   drawQuantity: number;
   speed?: number;
   onStop: (selectedIndexes: number[]) => void;
 }
+
+const SHAPES = [
+  'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)', // 五边形
+  'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', // 菱形
+  'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)', // 六边形
+  'circle(50% at 50% 50%)', // 圆形
+  'polygon(0% 0%, 100% 0%, 100% 100%)', // 三角形
+];
+
+const GRADIENTS = [
+  'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)',
+  'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
+  'linear-gradient(to right, #43e97b 0%, #38f9d7 100%)',
+  'linear-gradient(to right, #fa709a 0%, #fee140 100%)',
+  'linear-gradient(to top, #30cfd0 0%, #330867 100%)',
+  'linear-gradient(to right, #eea2a2 0%, #bbc1bf 19%, #57c6e1 42%, #b49fda 79%, #7ac5d8 100%)'
+];
 
 const SlotMachine: React.FC<SlotMachineProps> = ({
   users,
@@ -68,6 +88,22 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     });
   };
 
+  const getRandomShape = useCallback(() => {
+    return SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  }, []);
+
+  const getRandomGradient = useCallback(() => {
+    return GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
+  }, []);
+
+  const [shapes] = useState(() => 
+    Array(drawQuantity).fill(0).map(() => getRandomShape())
+  );
+
+  const [gradients] = useState(() =>
+    Array(drawQuantity).fill(0).map(() => getRandomGradient())
+  );
+
   return (
     <Box sx={{ 
       position: 'fixed',
@@ -85,29 +121,77 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
       <Box sx={{ 
         display: 'flex',
         flexDirection: 'row',
-        gap: 2,
-        height: '70vh',
+        gap: 3,
         alignItems: 'center',
-        overflow: 'hidden'
+        justifyContent: 'center',
+        width: '100%',
+        maxWidth: '1200px',
+        px: 2
       }}>
         {currentIndexes.map((index, i) => (
-          <Box
+          <Card
             key={i}
             sx={{
-              width: `${100 / drawQuantity}%`,
-              maxWidth: '200px',
-              py: 3,
-              backgroundColor: 'background.paper',
-              borderRadius: 1,
-              boxShadow: 2,
-              transition: 'all 0.3s ease',
-              mx: 1
+              width: 200,
+              height: 280,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              bgcolor: 'background.paper',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)'
+              }
             }}
           >
-            <Typography variant="h4">
-              {users[index]?.nickname || '???'}
-            </Typography>
-          </Box>
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                mt: 3,
+                mb: 2,
+                background: gradients[i],
+                clipPath: shapes[i],
+                transition: 'transform 0.3s ease',
+                animation: 'spin 2s linear infinite',
+                filter: 'hue-rotate(0deg)',
+                '@keyframes spin': {
+                  '0%': { 
+                    transform: 'rotate(0deg)',
+                    filter: 'hue-rotate(0deg)'
+                  },
+                  '50%': {
+                    filter: 'hue-rotate(180deg)'
+                  },
+                  '100%': { 
+                    transform: 'rotate(360deg)',
+                    filter: 'hue-rotate(360deg)'
+                  }
+                }
+              }}
+            />
+            <CardContent sx={{ textAlign: 'center', pt: 0 }}>
+              <Typography
+                variant="h4"
+                component="div"
+                sx={{
+                  mb: 1,
+                  fontWeight: 'bold',
+                  fontSize: '1.8rem',
+                  lineHeight: 1.2
+                }}
+              >
+                {users[index]?.nickname || '???'}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontSize: '0.9rem' }}
+              >
+                {users[index]?.alias || '???'}
+              </Typography>
+            </CardContent>
+          </Card>
         ))}
       </Box>
       <Button
@@ -116,7 +200,13 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         size="large"
         onClick={stopSpinning}
         disabled={!isSpinning}
-        sx={{ mt: 4 }}
+        sx={{ 
+          mt: 4,
+          px: 4,
+          py: 1.5,
+          fontSize: '1.2rem',
+          borderRadius: 2
+        }}
       >
         停止抽奖
       </Button>
