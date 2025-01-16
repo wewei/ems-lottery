@@ -6,8 +6,11 @@ import path from 'path';
 import authRoutes from './routes/auth';
 import prizeRoutes from './routes/prize';
 import lotteryRoutes from './routes/lottery';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 dotenv.config();
+
+const isDev = process.env.NODE_ENV === 'development';
 
 const app = express();
 
@@ -22,13 +25,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/prizes', prizeRoutes);
 app.use('/api/lottery', lotteryRoutes);
 
-// 服务静态文件
-app.use(express.static(path.resolve(__dirname, 'public')));
-
-// 所有其他请求返回 index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
-});
+// 开发环境代理到 Vite
+if (isDev) {
+  app.use('/', createProxyMiddleware({
+    target: 'http://localhost:5173',
+    changeOrigin: true,
+    ws: true,
+  }));
+} else {
+  // 生产环境服务静态文件
+  app.use(express.static(path.resolve(__dirname, 'public')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+  });
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
