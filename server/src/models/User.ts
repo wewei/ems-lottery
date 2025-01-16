@@ -4,6 +4,10 @@ export interface IUser extends Document {
   alias: string;      // 唯一标识符
   nickname: string;   // 显示名称
   isActive: boolean;  // 是否已激活
+  activatedFrom?: {
+    browserId: string;
+    activatedAt: Date;
+  };
 }
 
 const UserSchema: Schema = new Schema({
@@ -21,6 +25,13 @@ const UserSchema: Schema = new Schema({
   isActive: { 
     type: Boolean, 
     default: false 
+  },
+  activatedFrom: {
+    browserId: { 
+      type: String,
+      index: true
+    },
+    activatedAt: { type: Date }
   }
 });
 

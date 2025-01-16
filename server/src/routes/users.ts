@@ -200,6 +200,153 @@ router.post('/batch-delete', (async (req: Request, res: Response) => {
   }
 }) as RequestHandler);
 
+// 检查用户状态
+router.get('/check/:alias', (async (req: Request, res: Response) => {
+  try {
+    const { alias } = req.params;
+    const user = await User.findOne({ alias });
+
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    res.json({ 
+      user: {
+        alias: user.alias,
+        nickname: user.nickname,
+        isActive: user.isActive
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 激活用户
+router.post('/activate/:alias', (async (req: Request, res: Response) => {
+  try {
+    const { alias } = req.params;
+    const { browserId } = req.body;
+
+    if (!browserId) {
+      return res.status(400).json({ message: '缺少浏览器标识' });
+    }
+
+    const user = await User.findOne({ alias });
+
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    if (user.isActive) {
+      return res.status(400).json({ message: '用户已经激活' });
+    }
+
+    user.isActive = true;
+    user.activatedFrom = {
+      browserId,
+      activatedAt: new Date()
+    };
+    await user.save();
+
+    res.json({ 
+      message: '激活成功',
+      user: {
+        alias: user.alias,
+        nickname: user.nickname,
+        isActive: user.isActive
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 撤销激活
+router.post('/deactivate/:alias', (async (req: Request, res: Response) => {
+  try {
+    const { alias } = req.params;
+    const user = await User.findOne({ alias });
+
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    if (!user.isActive) {
+      return res.status(400).json({ message: '用户尚未激活' });
+    }
+
+    user.isActive = false;
+    await user.save();
+
+    res.json({ 
+      message: '已撤销激活',
+      user: {
+        alias: user.alias,
+        nickname: user.nickname,
+        isActive: user.isActive
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 根据浏览器ID查询激活用户
+router.get('/activated-by-browser', (async (req: Request, res: Response) => {
+  try {
+    const { browserId } = req.query;
+    if (!browserId) {
+      return res.status(400).json({ message: '缺少浏览器标识' });
+    }
+
+    const user = await User.findOne({ 'activatedFrom.browserId': browserId });
+    if (!user || !user.isActive) {
+      return res.json({ user: null });
+    }
+
+    res.json({ 
+      user: {
+        alias: user.alias,
+        nickname: user.nickname,
+        isActive: user.isActive
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 修改管理员激活用户的路由
+router.post('/admin/activate/:id', (async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    if (user.isActive) {
+      return res.status(400).json({ message: '用户已经激活' });
+    }
+
+    // 生成带有admin-前缀的随机ID
+    const adminBrowserId = `admin-${Math.random().toString(36).substring(2)}`;
+
+    user.isActive = true;
+    user.activatedFrom = {
+      browserId: adminBrowserId,
+      activatedAt: new Date()
+    };
+    await user.save();
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
 // ... 其他路由
 
 export default router; 
