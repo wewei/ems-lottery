@@ -101,6 +101,7 @@ const UserManagement: React.FC = () => {
           const text = e.target?.result as string;
           const rows = text.split(/\r\n|\r|\n/)
             .filter(row => row.trim())
+            .slice(1)
             .map(row => {
               const [alias, nickname] = row
                 .split(',')

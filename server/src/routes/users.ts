@@ -418,18 +418,17 @@ router.post('/import', upload.single('file'), (async (req: Request, res: Respons
 
     const fileContent = fs.readFileSync(req.file.path, 'utf-8');
     // 支持 \r\n (Windows), \n (Unix), \r (Mac) 换行符
-    const rows = fileContent.split(/\r\n|\r|\n/).filter(row => row.trim());
-
-    const users = [];
-    for (let i = 1; i < rows.length; i++) {
-      const [alias, nickname] = rows[i]
-        .split(',')
-        .map(field => field.trim().replace(/^["']|["']$/g, '')); // 处理引号和空格
-
-      if (alias && nickname) {
-        users.push({ alias, nickname });
-      }
-    }
+    const rows = fileContent.split(/\r\n|\r|\n/)
+      .filter(row => row.trim())
+      // 跳过第一行 header
+      .slice(1)
+      .map(row => {
+        const [alias, nickname] = row
+          .split(',')
+          .map(field => field.trim().replace(/^["']|["']$/g, ''));
+        return { alias, nickname };
+      })
+      .filter(({ alias, nickname }) => alias && nickname);
 
     // ... 其他代码
   } catch (err) {
