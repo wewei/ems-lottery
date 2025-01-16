@@ -14,8 +14,17 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Switch,
+  IconButton
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -54,6 +63,13 @@ const Admin: React.FC = () => {
   const [editDialog, setEditDialog] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [editType, setEditType] = useState<'user' | 'prize'>('user');
+  const [addUserDialog, setAddUserDialog] = useState(false);
+  const [newUser, setNewUser] = useState({
+    alias: '',
+    nickname: ''
+  });
+  const [deleteDialog, setDeleteDialog] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<{_id: string, nickname: string} | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -149,6 +165,41 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleAddUser = async () => {
+    try {
+      await axios.post('/api/users', newUser);
+      setAddUserDialog(false);
+      setNewUser({ alias: '', nickname: '' });
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '添加用户失败');
+    }
+  };
+
+  const handleToggleActive = async (userId: string, currentStatus: boolean) => {
+    try {
+      await axios.put(`/api/users/${userId}`, {
+        isActive: !currentStatus
+      });
+      fetchUsers();
+    } catch (err) {
+      alert('更新状态失败');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteUser) return;
+    
+    try {
+      await axios.delete(`/api/users/${deleteUser._id}`);
+      fetchUsers();
+      setDeleteDialog(false);
+      setDeleteUser(null);
+    } catch (err) {
+      alert('删除失败');
+    }
+  };
+
   return (
     <Container>
       <Box sx={{ width: '100%', mt: 4 }}>
@@ -173,23 +224,60 @@ const Admin: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <List>
-              {users.map((user) => (
-                <ListItem
-                  key={user._id}
-                  secondaryAction={
-                    <Button onClick={() => handleEdit(user, 'user')}>
-                      编辑
-                    </Button>
-                  }
-                >
-                  <ListItemText
-                    primary={user.nickname}
-                    secondary={`别名: ${user.alias}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setAddUserDialog(true)}
+              >
+                添加用户
+              </Button>
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>别名</TableCell>
+                    <TableCell>昵称</TableCell>
+                    <TableCell align="center">状态</TableCell>
+                    <TableCell align="center">操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user._id}>
+                      <TableCell>{user.alias}</TableCell>
+                      <TableCell>{user.nickname}</TableCell>
+                      <TableCell align="center">
+                        <Switch
+                          checked={user.isActive}
+                          onChange={() => handleToggleActive(user._id, user.isActive)}
+                          color="primary"
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          onClick={() => handleEdit(user, 'user')}
+                        >
+                          编辑
+                        </Button>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => {
+                            setDeleteUser(user);
+                            setDeleteDialog(true);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
@@ -211,103 +299,153 @@ const Admin: React.FC = () => {
               ))}
             </List>
           </TabPanel>
+
+          <Dialog open={addUserDialog} onClose={() => setAddUserDialog(false)}>
+            <DialogTitle>添加新用户</DialogTitle>
+            <DialogContent>
+              <TextField
+                fullWidth
+                label="别名"
+                margin="normal"
+                value={newUser.alias}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, alias: e.target.value })
+                }
+                helperText="用户的唯一标识符"
+              />
+              <TextField
+                fullWidth
+                label="昵称"
+                margin="normal"
+                value={newUser.nickname}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, nickname: e.target.value })
+                }
+                helperText="显示用的名称"
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setAddUserDialog(false)}>取消</Button>
+              <Button 
+                onClick={handleAddUser}
+                disabled={!newUser.alias || !newUser.nickname}
+              >
+                添加
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
+            <DialogTitle>
+              {editType === 'user' ? '编辑用户' : '编辑奖项'}
+            </DialogTitle>
+            <DialogContent>
+              {editType === 'user' ? (
+                <>
+                  <TextField
+                    fullWidth
+                    label="别名"
+                    margin="normal"
+                    value={editItem?.alias || ''}
+                    onChange={(e) =>
+                      setEditItem({ ...editItem, alias: e.target.value })
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    label="昵称"
+                    margin="normal"
+                    value={editItem?.nickname || ''}
+                    onChange={(e) =>
+                      setEditItem({ ...editItem, nickname: e.target.value })
+                    }
+                  />
+                </>
+              ) : (
+                <>
+                  <TextField
+                    fullWidth
+                    label="奖项名称"
+                    margin="normal"
+                    value={editItem?.name || ''}
+                    onChange={(e) =>
+                      setEditItem({ ...editItem, name: e.target.value })
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    label="图片URL"
+                    margin="normal"
+                    value={editItem?.image || ''}
+                    onChange={(e) =>
+                      setEditItem({ ...editItem, image: e.target.value })
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    label="总数量"
+                    type="number"
+                    margin="normal"
+                    value={editItem?.totalQuantity || 0}
+                    onChange={(e) =>
+                      setEditItem({
+                        ...editItem,
+                        totalQuantity: parseInt(e.target.value)
+                      })
+                    }
+                  />
+                  <TextField
+                    fullWidth
+                    label="每次抽取数量"
+                    type="number"
+                    margin="normal"
+                    value={editItem?.drawQuantity || 1}
+                    onChange={(e) =>
+                      setEditItem({
+                        ...editItem,
+                        drawQuantity: parseInt(e.target.value)
+                      })
+                    }
+                  />
+                </>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setEditDialog(false)}>取消</Button>
+              <Button onClick={handleSave}>保存</Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={resetDialog} onClose={() => setResetDialog(false)}>
+            <DialogTitle>确认重置密码</DialogTitle>
+            <DialogContent>
+              <Typography>
+                确定要重置管理员密码吗？重置后将返回登录页面。
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setResetDialog(false)}>取消</Button>
+              <Button onClick={handlePasswordReset} color="warning">
+                确认重置
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogContent>
+              <Typography>
+                确定要删除用户 "{deleteUser?.nickname}" 吗？此操作不可恢复。
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDeleteDialog(false)}>取消</Button>
+              <Button onClick={handleDelete} color="error">
+                删除
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Paper>
-
-        <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
-          <DialogTitle>
-            {editType === 'user' ? '编辑用户' : '编辑奖项'}
-          </DialogTitle>
-          <DialogContent>
-            {editType === 'user' ? (
-              <>
-                <TextField
-                  fullWidth
-                  label="别名"
-                  margin="normal"
-                  value={editItem?.alias || ''}
-                  onChange={(e) =>
-                    setEditItem({ ...editItem, alias: e.target.value })
-                  }
-                />
-                <TextField
-                  fullWidth
-                  label="昵称"
-                  margin="normal"
-                  value={editItem?.nickname || ''}
-                  onChange={(e) =>
-                    setEditItem({ ...editItem, nickname: e.target.value })
-                  }
-                />
-              </>
-            ) : (
-              <>
-                <TextField
-                  fullWidth
-                  label="奖项名称"
-                  margin="normal"
-                  value={editItem?.name || ''}
-                  onChange={(e) =>
-                    setEditItem({ ...editItem, name: e.target.value })
-                  }
-                />
-                <TextField
-                  fullWidth
-                  label="图片URL"
-                  margin="normal"
-                  value={editItem?.image || ''}
-                  onChange={(e) =>
-                    setEditItem({ ...editItem, image: e.target.value })
-                  }
-                />
-                <TextField
-                  fullWidth
-                  label="总数量"
-                  type="number"
-                  margin="normal"
-                  value={editItem?.totalQuantity || 0}
-                  onChange={(e) =>
-                    setEditItem({
-                      ...editItem,
-                      totalQuantity: parseInt(e.target.value)
-                    })
-                  }
-                />
-                <TextField
-                  fullWidth
-                  label="每次抽取数量"
-                  type="number"
-                  margin="normal"
-                  value={editItem?.drawQuantity || 1}
-                  onChange={(e) =>
-                    setEditItem({
-                      ...editItem,
-                      drawQuantity: parseInt(e.target.value)
-                    })
-                  }
-                />
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEditDialog(false)}>取消</Button>
-            <Button onClick={handleSave}>保存</Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={resetDialog} onClose={() => setResetDialog(false)}>
-          <DialogTitle>确认重置密码</DialogTitle>
-          <DialogContent>
-            <Typography>
-              确定要重置管理员密码吗？重置后将返回登录页面。
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setResetDialog(false)}>取消</Button>
-            <Button onClick={handlePasswordReset} color="warning">
-              确认重置
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
     </Container>
   );

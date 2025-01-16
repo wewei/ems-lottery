@@ -6,6 +6,7 @@ import path from 'path';
 import authRoutes from './routes/auth';
 import prizeRoutes from './routes/prize';
 import lotteryRoutes from './routes/lottery';
+import userRoutes from './routes/users';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 dotenv.config();
@@ -24,6 +25,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lottery')
 app.use('/api/auth', authRoutes);
 app.use('/api/prizes', prizeRoutes);
 app.use('/api/lottery', lotteryRoutes);
+app.use('/api/users', userRoutes);
 
 // 开发环境代理到 Vite
 if (isDev) {
