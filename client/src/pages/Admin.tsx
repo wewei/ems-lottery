@@ -22,9 +22,20 @@ import {
   TableHead,
   TableRow,
   Switch,
-  IconButton
+  IconButton,
+  Input,
+  TablePagination,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  Toolbar,
+  alpha
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +81,18 @@ const Admin: React.FC = () => {
   });
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [deleteUser, setDeleteUser] = useState<{_id: string, nickname: string} | null>(null);
+  const [importDialog, setImportDialog] = useState(false);
+  const [previewData, setPreviewData] = useState<{
+    newUsers: Array<{ alias: string; nickname: string }>;
+    updateUsers: Array<{ alias: string; nickname: string }>;
+    unchangedUsers: Array<{ alias: string; nickname: string }>;
+  }>({ newUsers: [], updateUsers: [], unchangedUsers: [] });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -113,11 +136,27 @@ const Admin: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users');
-      setUsers(response.data.users || []);
+      const response = await axios.get(
+        `/api/users?page=${page + 1}&limit=${rowsPerPage}&search=${searchTerm}`
+      );
+      setUsers(response.data.users);
+      setTotalUsers(response.data.total);
     } catch (err) {
       console.error('获取用户列表失败', err);
     }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [page, rowsPerPage]);
+
+  const handleChangePage = (_: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const fetchPrizes = async () => {
@@ -200,6 +239,128 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      // 统一换行符，然后分割
+      const rows = text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .map(row => row.trim())
+        .filter(Boolean);
+      
+      // 移除 BOM 和引号
+      const headers = rows[0].replace(/^\uFEFF/, '').replace(/['"]/g, '').toLowerCase().split(',');
+      const aliasIndex = headers.findIndex(h => h.toLowerCase() === 'alias');
+      const nicknameIndex = headers.findIndex(h => h.toLowerCase() === 'nickname');
+      console.log(headers);
+      console.log(aliasIndex, nicknameIndex);
+      
+      if (aliasIndex === -1 || nicknameIndex === -1) {
+        alert('CSV 文件必须包含 Alias 和 Nickname 列');
+        return;
+      }
+      
+      const users = rows.slice(1).map(row => {
+        const cols = row.split(',').map(col => col.trim().replace(/['"]/g, ''));
+        if (!cols[aliasIndex] || !cols[nicknameIndex]) return null;
+        return {
+          alias: cols[aliasIndex],
+          nickname: cols[nicknameIndex]
+        };
+      }).filter(Boolean);
+      
+      if (users.length === 0) {
+        alert('没有找到有效的用户数据');
+        return;
+      }
+      
+      try {
+        const response = await axios.post('/api/users/preview-import', { users });
+        setPreviewData(response.data);
+        setImportDialog(true);
+        // 清理文件输入，允许重复选择同一文件
+        event.target.value = '';
+      } catch (err) {
+        alert('预览导入数据失败');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImport = async () => {
+    try {
+      await axios.post('/api/users/batch-import', previewData);
+      setImportDialog(false);
+      fetchUsers();
+      alert('导入成功');
+    } catch (err) {
+      alert('导入失败');
+    }
+  };
+
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const newSelected = users.map((user) => user._id);
+      setSelected(newSelected);
+      return;
+    }
+    setSelected([]);
+  };
+
+  const handleSelectClick = (_: React.MouseEvent<unknown>, id: string) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected: string[] = [];
+    
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1),
+      );
+    }
+    setSelected(newSelected);
+  };
+
+  const handleBatchDelete = async () => {
+    try {
+      await axios.post('/api/users/batch-delete', { ids: selected });
+      setSelected([]);
+      fetchUsers();
+      alert('删除成功');
+    } catch (err) {
+      alert('批量删除失败');
+    }
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    
+    // 清除之前的定时器
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // 设置新的定时器，300ms 后执行搜索
+    const timeoutId = setTimeout(() => {
+      setPage(0); // 重置到第一页
+      fetchUsers();
+    }, 300);
+    
+    setSearchTimeout(timeoutId);
+  };
+
   return (
     <Container>
       <Box sx={{ width: '100%', mt: 4 }}>
@@ -224,7 +385,16 @@ const Admin: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                label="搜索用户"
+                variant="outlined"
+                size="small"
+                value={searchTerm}
+                onChange={handleSearch}
+                placeholder="输入别名或昵称搜索..."
+                sx={{ width: 250 }}
+              />
               <Button
                 variant="contained"
                 color="primary"
@@ -232,11 +402,45 @@ const Admin: React.FC = () => {
               >
                 添加用户
               </Button>
+              <Button
+                variant="contained"
+                component="label"
+                startIcon={<CloudUploadIcon />}
+              >
+                导入 CSV
+                <Input
+                  type="file"
+                  sx={{ display: 'none' }}
+                  onChange={handleFileUpload}
+                  inputProps={{ accept: '.csv' }}
+                />
+              </Button>
+              {selected.length > 0 && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteSweepIcon />}
+                  onClick={() => {
+                    if (window.confirm(`确定要删除选中的 ${selected.length} 个用户吗？`)) {
+                      handleBatchDelete();
+                    }
+                  }}
+                >
+                  删除选中 ({selected.length})
+                </Button>
+              )}
             </Box>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        indeterminate={selected.length > 0 && selected.length < users.length}
+                        checked={users.length > 0 && selected.length === users.length}
+                        onChange={handleSelectAllClick}
+                      />
+                    </TableCell>
                     <TableCell>别名</TableCell>
                     <TableCell>昵称</TableCell>
                     <TableCell align="center">状态</TableCell>
@@ -245,7 +449,17 @@ const Admin: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {users.map((user) => (
-                    <TableRow key={user._id}>
+                    <TableRow
+                      key={user._id}
+                      selected={selected.indexOf(user._id) !== -1}
+                      hover
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          checked={selected.indexOf(user._id) !== -1}
+                          onClick={(event) => handleSelectClick(event, user._id)}
+                        />
+                      </TableCell>
                       <TableCell>{user.alias}</TableCell>
                       <TableCell>{user.nickname}</TableCell>
                       <TableCell align="center">
@@ -278,6 +492,19 @@ const Admin: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            <TablePagination
+              component="div"
+              count={totalUsers}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 20, 50]}
+              labelRowsPerPage="每页行数"
+              labelDisplayedRows={({ from, to, count }) => 
+                `${from}-${to} 共 ${count !== -1 ? count : `超过 ${to}`}`
+              }
+            />
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
@@ -442,6 +669,104 @@ const Admin: React.FC = () => {
               <Button onClick={() => setDeleteDialog(false)}>取消</Button>
               <Button onClick={handleDelete} color="error">
                 删除
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={importDialog}
+            onClose={() => setImportDialog(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>导入预览</DialogTitle>
+            <DialogContent>
+              {previewData.newUsers.length > 0 && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 2 }}>
+                    新增用户 ({previewData.newUsers.length})
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>别名</TableCell>
+                          <TableCell>昵称</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {previewData.newUsers.map((user, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{user.alias}</TableCell>
+                            <TableCell>{user.nickname}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+              
+              {previewData.updateUsers.length > 0 && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 2 }}>
+                    更新用户 ({previewData.updateUsers.length})
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>别名</TableCell>
+                          <TableCell>昵称</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {previewData.updateUsers.map((user, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{user.alias}</TableCell>
+                            <TableCell>{user.nickname}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+              
+              {previewData.unchangedUsers.length > 0 && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 2, color: 'text.secondary' }}>
+                    无变更用户 ({previewData.unchangedUsers.length})
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>别名</TableCell>
+                          <TableCell>昵称</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {previewData.unchangedUsers.map((user, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{user.alias}</TableCell>
+                            <TableCell>{user.nickname}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setImportDialog(false)}>取消</Button>
+              <Button
+                onClick={handleImport}
+                variant="contained"
+                disabled={previewData.newUsers.length === 0 && previewData.updateUsers.length === 0}
+              >
+                确认导入
               </Button>
             </DialogActions>
           </Dialog>
