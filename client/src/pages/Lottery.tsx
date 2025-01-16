@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import Header from '../components/Header';
+import FloatingQRCode from '../components/FloatingQRCode';
 
 interface Prize {
   _id: string;
@@ -30,6 +31,7 @@ const Lottery: React.FC = () => {
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [stats, setStats] = useState<Stats>({ activeUserCount: 0 });
   const navigate = useNavigate();
+  const activateUrl = `${window.location.origin}/activate`;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -132,6 +134,7 @@ const Lottery: React.FC = () => {
           ))}
         </Grid>
       </Container>
+      <FloatingQRCode url={activateUrl} />
     </>
   );
 };
