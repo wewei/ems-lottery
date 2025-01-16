@@ -43,7 +43,12 @@ const PrizeSchema: Schema = new Schema({
   drawQuantity: { 
     type: Number, 
     required: true,
-    min: 1 
+    min: 1,
+    max: 5,
+    validate: {
+      validator: Number.isInteger,
+      message: '每轮抽奖数必须是整数'
+    }
   }
 });
 

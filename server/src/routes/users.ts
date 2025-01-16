@@ -1,5 +1,7 @@
 import express, { Request, Response, Router, RequestHandler } from 'express';
 import User from '../models/User';
+import DrawRecord from '../models/DrawRecord';
+import Setting from '../models/Setting';
 
 interface ImportUser {
   alias: string;
@@ -357,15 +359,49 @@ router.get('/stats', (async (req: Request, res: Response) => {
   }
 }) as RequestHandler);
 
-// 获取激活用户列表
+// 获取可参与抽奖的用户列表
 router.get('/active', (async (req: Request, res: Response) => {
   try {
-    const users = await User.find({ isActive: true })
-      .select('nickname alias')
-      .sort({ nickname: 1 });
+    const prizeId = req.query.prizeId as string;
+    if (!prizeId) {
+      return res.status(400).json({ message: '缺少奖项ID参数' });
+    }
+
+    const settings = await Setting.getInstance();
+    let winnersQuery;
+
+    if (settings.allowMultipleWins) {
+      // 只排除当前奖项的获奖用户
+      const drawRecords = await DrawRecord.find({ prizeId });
+      winnersQuery = {
+        alias: { 
+          $nin: drawRecords.flatMap(record => 
+            record.winners.map(winner => winner.alias)
+          )
+        }
+      };
+    } else {
+      // 排除所有获奖用户
+      const allDrawRecords = await DrawRecord.find();
+      winnersQuery = {
+        alias: { 
+          $nin: allDrawRecords.flatMap(record => 
+            record.winners.map(winner => winner.alias)
+          )
+        }
+      };
+    }
+
+    const users = await User.find({ 
+      isActive: true,
+      ...winnersQuery
+    })
+    .select('alias nickname')
+    .lean();
+
     res.json({ users });
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '获取用户列表失败' });
   }
 }) as RequestHandler);
 

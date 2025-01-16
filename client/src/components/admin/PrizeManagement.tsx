@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 
 interface Prize {
@@ -38,7 +39,9 @@ const PrizeManagement: React.FC = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [createDialog, setCreateDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
   const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
+  const [editingPrize, setEditingPrize] = useState<Prize | null>(null);
   const [newPrize, setNewPrize] = useState({
     name: '',
     image: '',
@@ -121,6 +124,19 @@ const PrizeManagement: React.FC = () => {
     }
   };
 
+  const handleEdit = async () => {
+    if (!editingPrize) return;
+    
+    try {
+      await axios.put(`/api/prizes/${editingPrize._id}`, editingPrize);
+      setEditDialog(false);
+      setEditingPrize(null);
+      fetchPrizes();
+    } catch (err) {
+      alert('更新奖项失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2 }}>
@@ -165,13 +181,25 @@ const PrizeManagement: React.FC = () => {
                 <TableCell>{prize.totalQuantity}</TableCell>
                 <TableCell>{prize.drawQuantity}</TableCell>
                 <TableCell>{prize.remaining}</TableCell>
-                <TableCell>
+                <TableCell align="center">
+                  <IconButton
+                    color="primary"
+                    onClick={() => {
+                      setEditingPrize(prize);
+                      setImagePreview(prize.image);
+                      setEditDialog(true);
+                    }}
+                    title="编辑"
+                  >
+                    <EditIcon />
+                  </IconButton>
                   <IconButton
                     color="error"
                     onClick={() => {
                       setSelectedPrize(prize);
                       setDeleteDialog(true);
                     }}
+                    title="删除"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -224,12 +252,16 @@ const PrizeManagement: React.FC = () => {
               sx={{ mb: 2 }}
             />
             <TextField
-              fullWidth
               type="number"
               label="抽取数量"
               value={newPrize.drawQuantity}
-              onChange={(e) => setNewPrize(prev => ({ ...prev, drawQuantity: parseInt(e.target.value) }))}
-              sx={{ mb: 2 }}
+              onChange={(e) => setNewPrize(prev => ({ 
+                ...prev, 
+                drawQuantity: Math.min(5, Math.max(1, parseInt(e.target.value)))
+              }))}
+              inputProps={{ min: 1, max: 5 }}
+              helperText="每轮抽奖数量范围：1-5"
+              fullWidth
             />
             <Button
               variant="contained"
@@ -266,6 +298,69 @@ const PrizeManagement: React.FC = () => {
           <Button onClick={handleDelete} color="error">
             确认删除
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
+        <DialogTitle>编辑奖项</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            {imagePreview && (
+              <Box sx={{ textAlign: 'center' }}>
+                <img
+                  src={imagePreview}
+                  alt="预览"
+                  style={{
+                    maxWidth: '200px',
+                    maxHeight: '200px',
+                    objectFit: 'contain'
+                  }}
+                />
+              </Box>
+            )}
+            <TextField
+              label="名称"
+              value={editingPrize?.name || ''}
+              onChange={(e) => setEditingPrize(prev => prev ? { ...prev, name: e.target.value } : null)}
+              fullWidth
+            />
+            <TextField
+              type="number"
+              label="总数量"
+              value={editingPrize?.totalQuantity || 0}
+              onChange={(e) => setEditingPrize(prev => prev ? { ...prev, totalQuantity: parseInt(e.target.value) } : null)}
+              fullWidth
+            />
+            <TextField
+              type="number"
+              label="抽取数量"
+              value={editingPrize?.drawQuantity || 1}
+              onChange={(e) => setEditingPrize(prev => prev ? {
+                ...prev,
+                drawQuantity: Math.min(5, Math.max(1, parseInt(e.target.value)))
+              } : null)}
+              inputProps={{ min: 1, max: 5 }}
+              helperText="每轮抽奖数量范围：1-5"
+              fullWidth
+            />
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<ImageIcon />}
+            >
+              更换图片
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialog(false)}>取消</Button>
+          <Button onClick={handleEdit} color="primary">保存</Button>
         </DialogActions>
       </Dialog>
     </Box>

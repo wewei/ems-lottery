@@ -84,19 +84,27 @@ const Lottery: React.FC = () => {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  cursor: 'pointer',
+                  cursor: prize.remaining > 0 ? 'pointer' : 'not-allowed',
+                  opacity: prize.remaining > 0 ? 1 : 0.6,
                   '&:hover': {
-                    boxShadow: 6
+                    boxShadow: prize.remaining > 0 ? 6 : 1
                   }
                 }}
-                onClick={() => navigate(`/lottery/${prize._id}`)}
+                onClick={() => {
+                  if (prize.remaining > 0) {
+                    navigate(`/lottery/${prize._id}`);
+                  }
+                }}
               >
                 <CardMedia
                   component="img"
                   height="200"
                   image={prize.image}
                   alt={prize.name}
-                  sx={{ objectFit: 'cover' }}
+                  sx={{ 
+                    objectFit: 'cover',
+                    filter: prize.remaining === 0 ? 'grayscale(100%)' : 'none'
+                  }}
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="h2">

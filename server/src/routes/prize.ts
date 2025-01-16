@@ -31,7 +31,7 @@ async function calculateRemaining(prizeId: string): Promise<number> {
     Prize.findById(prizeId),
     DrawRecord.aggregate([
       { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
-      { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+      { $group: { _id: null, total: { $sum: { $size: '$winners' } } } }
     ])
   ]);
 
@@ -110,6 +110,10 @@ router.post('/', (async (req: Request, res: Response) => {
   try {
     const { name, image, totalQuantity, drawQuantity } = req.body;
 
+    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
+      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
+    }
+
     // 从 base64 转换回二进制
     const matches = image.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
@@ -147,6 +151,10 @@ router.put('/:id', (async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, image, totalQuantity, drawQuantity } = req.body;
+
+    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
+      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
+    }
 
     const update: any = { name, totalQuantity, drawQuantity };
 
@@ -196,7 +204,7 @@ router.get('/:id', (async (req: Request, res: Response) => {
       Prize.findById(prizeId).lean().exec(),
       DrawRecord.aggregate([
         { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
-        { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+        { $group: { _id: null, total: { $sum: { $size: '$winners' } } } }
       ])
     ]);
 

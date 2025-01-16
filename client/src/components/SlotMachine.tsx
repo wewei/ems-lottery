@@ -69,24 +69,39 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   };
 
   return (
-    <Box sx={{ textAlign: 'center', py: 3 }}>
+    <Box sx={{ 
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.9)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1300
+    }}>
       <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
+        display: 'flex',
+        flexDirection: 'row',
         gap: 2,
-        mb: 3,
-        maxHeight: '300px',
+        height: '70vh',
+        alignItems: 'center',
         overflow: 'hidden'
       }}>
         {currentIndexes.map((index, i) => (
           <Box
             key={i}
             sx={{
-              py: 2,
+              width: `${100 / drawQuantity}%`,
+              maxWidth: '200px',
+              py: 3,
               backgroundColor: 'background.paper',
               borderRadius: 1,
               boxShadow: 2,
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              mx: 1
             }}
           >
             <Typography variant="h4">
@@ -101,6 +116,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         size="large"
         onClick={stopSpinning}
         disabled={!isSpinning}
+        sx={{ mt: 4 }}
       >
         停止抽奖
       </Button>

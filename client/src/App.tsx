@@ -4,12 +4,12 @@ import Login from './pages/Login';
 import Admin from './pages/Admin';
 import PrivateRoute from './components/PrivateRoute';
 import Activate from './pages/Activate';
-import PasswordReset from './components/admin/PasswordReset';
 import UserManagement from './components/admin/UserManagement';
 import PrizeManagement from './components/admin/PrizeManagement';
 import DrawRecordManagement from './components/admin/DrawRecordManagement';
 import Lottery from './pages/Lottery';
 import LotteryDraw from './pages/LotteryDraw';
+import AdvancedSettings from './components/admin/AdvancedSettings';
 
 function App() {
   return (
@@ -27,7 +27,7 @@ function App() {
           <Route path="prizes" element={<PrizeManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="records" element={<DrawRecordManagement />} />
-          <Route path="password" element={<PasswordReset />} />
+          <Route path="settings" element={<AdvancedSettings />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/activate" element={<Activate />} />

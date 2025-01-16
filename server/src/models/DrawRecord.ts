@@ -4,7 +4,6 @@ export interface IDrawRecord extends Document {
   drawTime: Date;          // 抽奖时间
   prizeId: string;         // 奖项ID
   prizeName: string;       // 奖项名称（冗余存储，方便查询显示）
-  drawQuantity: number;    // 本次抽取数量
   winners: Array<{        // 中奖者列表
     userId: mongoose.Types.ObjectId;
     alias: string;        // 用户别名
@@ -28,11 +27,6 @@ const DrawRecordSchema: Schema = new Schema({
   prizeName: {
     type: String,
     required: true
-  },
-  drawQuantity: {
-    type: Number,
-    required: true,
-    min: 1
   },
   winners: [{
     alias: {

@@ -22,6 +22,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
 
 interface User {
@@ -46,6 +47,9 @@ const UserManagement: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [batchDeleteDialog, setBatchDeleteDialog] = useState(false);
+  const [editDialog, setEditDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -161,6 +165,22 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleEdit = async () => {
+    if (!editingUser) return;
+    
+    try {
+      await axios.put(`/api/users/${editingUser._id}`, {
+        alias: editingUser.alias,
+        nickname: editingUser.nickname
+      });
+      setEditDialog(false);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '更新用户失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -254,12 +274,22 @@ const UserManagement: React.FC = () => {
                 </TableCell>
                 <TableCell align="center">
                   <IconButton
+                    color="primary"
+                    onClick={() => {
+                      setEditingUser(user);
+                      setEditDialog(true);
+                    }}
+                    title="编辑"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
                     color="error"
                     onClick={() => {
                       setSelectedUsers([user._id]);
                       setDeleteDialog(true);
                     }}
-                    title="删除用户"
+                    title="删除"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -328,6 +358,30 @@ const UserManagement: React.FC = () => {
           <Button onClick={handleBatchDelete} color="error">
             确认删除
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
+        <DialogTitle>编辑用户</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <TextField
+              label="别名"
+              value={editingUser?.alias || ''}
+              onChange={(e) => setEditingUser(prev => prev ? { ...prev, alias: e.target.value } : null)}
+              fullWidth
+            />
+            <TextField
+              label="昵称"
+              value={editingUser?.nickname || ''}
+              onChange={(e) => setEditingUser(prev => prev ? { ...prev, nickname: e.target.value } : null)}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialog(false)}>取消</Button>
+          <Button onClick={handleEdit} color="primary">保存</Button>
         </DialogActions>
       </Dialog>
     </Box>

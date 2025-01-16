@@ -100,7 +100,6 @@ const DrawRecordManagement: React.FC = () => {
             <TableRow>
               <TableCell>抽奖时间</TableCell>
               <TableCell>奖项</TableCell>
-              <TableCell>抽取数量</TableCell>
               <TableCell>中奖者</TableCell>
               <TableCell>操作</TableCell>
             </TableRow>
@@ -110,7 +109,6 @@ const DrawRecordManagement: React.FC = () => {
               <TableRow key={record._id}>
                 <TableCell>{formatDate(record.drawTime)}</TableCell>
                 <TableCell>{record.prizeName}</TableCell>
-                <TableCell>{record.drawQuantity}</TableCell>
                 <TableCell>
                   {record.winners.map(winner => 
                     `${winner.nickname}(${winner.alias})`

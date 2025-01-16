@@ -25,7 +25,7 @@ router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
       Prize.findById(prizeId),
       DrawRecord.aggregate([
         { $match: { prizeId: new mongoose.Types.ObjectId(prizeId) } },
-        { $group: { _id: null, total: { $sum: '$drawQuantity' } } }
+        { $group: { _id: null, total: { $sum: { $size: '$winners' } } } }
       ])
     ]);
 
@@ -36,12 +36,12 @@ router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
     const remaining = prize.totalQuantity - (drawnCount[0]?.total || 0);
 
     // 检查剩余数量
-    if (remaining < prize.drawQuantity) {
+    if (remaining < winners.length) {
       return res.status(400).json({ message: '奖品数量不足' });
     }
 
     // 验证中奖用户数量
-    if (!winners || winners.length !== prize.drawQuantity) {
+    if (!winners || winners.length === 0 || winners.length > prize.drawQuantity) {
       return res.status(400).json({ message: '中奖用户数量不正确' });
     }
 
@@ -50,7 +50,6 @@ router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
       drawTime: new Date(),
       prizeId: prize._id,
       prizeName: prize.name,
-      drawQuantity: prize.drawQuantity,
       winners: winners.map(w => ({
         alias: w.alias,
         nickname: w.nickname
@@ -60,7 +59,7 @@ router.post('/draw/:prizeId', (async (req: Request, res: Response) => {
 
     res.json({ 
       winners,
-      remaining: remaining - prize.drawQuantity 
+      remaining: remaining - winners.length
     });
   } catch (err) {
     console.error('抽奖失败:', err);
