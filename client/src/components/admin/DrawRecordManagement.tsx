@@ -18,7 +18,7 @@ import {
   Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import axios from 'axios';
+import api from '../../utils/axios';
 
 interface DrawRecord {
   _id: string;
@@ -42,7 +42,7 @@ const DrawRecordManagement: React.FC = () => {
 
   const fetchRecords = async () => {
     try {
-      const response = await axios.get('/api/draw-records', {
+      const response = await api.get('/api/draw-records', {
         params: {
           page: page + 1,
           limit: rowsPerPage
@@ -72,7 +72,7 @@ const DrawRecordManagement: React.FC = () => {
     if (!selectedRecord) return;
 
     try {
-      await axios.delete(`/api/draw-records/${selectedRecord._id}`);
+      await api.delete(`/api/draw-records/${selectedRecord._id}`);
       setDeleteDialog(false);
       setSelectedRecord(null);
       fetchRecords();

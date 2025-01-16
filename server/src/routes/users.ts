@@ -2,6 +2,7 @@ import express, { Request, Response, Router, RequestHandler } from 'express';
 import User from '../models/User';
 import DrawRecord from '../models/DrawRecord';
 import Setting from '../models/Setting';
+import { authenticateToken } from '../middleware/auth';
 
 interface ImportUser {
   alias: string;
@@ -11,7 +12,7 @@ interface ImportUser {
 const router: Router = express.Router();
 
 // 创建用户
-router.post('/', (async (req: Request, res: Response) => {
+router.post('/', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { alias, nickname } = req.body;
 
@@ -41,7 +42,7 @@ router.post('/', (async (req: Request, res: Response) => {
 }) as RequestHandler);
 
 // 获取用户列表
-router.get('/', (async (req: Request, res: Response) => {
+router.get('/', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -77,7 +78,7 @@ router.get('/', (async (req: Request, res: Response) => {
 }) as RequestHandler);
 
 // 更新用户
-router.put('/:id', (async (req: Request, res: Response) => {
+router.put('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const update = req.body;
@@ -126,7 +127,7 @@ router.delete('/:id', (async (req: Request, res: Response) => {
 }) as RequestHandler);
 
 // 预览导入数据
-router.post('/preview-import', (async (req: Request, res: Response) => {
+router.post('/preview-import', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { users } = req.body as { users: ImportUser[] };
     const newUsers: typeof users = [];
@@ -153,7 +154,7 @@ router.post('/preview-import', (async (req: Request, res: Response) => {
 }) as RequestHandler);
 
 // 批量导入用户
-router.post('/batch-import', (async (req: Request, res: Response) => {
+router.post('/batch-import', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { newUsers, updateUsers } = req.body as { 
       newUsers: ImportUser[],
@@ -187,7 +188,7 @@ router.post('/batch-import', (async (req: Request, res: Response) => {
 }) as RequestHandler);
 
 // 批量删除用户
-router.post('/batch-delete', (async (req: Request, res: Response) => {
+router.post('/batch-delete', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { ids } = req.body as { ids: string[] };
     

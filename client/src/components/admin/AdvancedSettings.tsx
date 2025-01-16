@@ -10,7 +10,7 @@ import {
 Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../utils/axios';
 
 const AdvancedSettings: React.FC = () => {
     const [allowMultipleWins, setAllowMultipleWins] = useState(false);
@@ -19,7 +19,7 @@ const AdvancedSettings: React.FC = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const response = await axios.get('/api/settings');
+                const response = await api.get('/api/settings');
                 setAllowMultipleWins(response.data.allowMultipleWins);
             } catch (err) {
                 console.error('获取设置失败', err);
@@ -30,7 +30,7 @@ const AdvancedSettings: React.FC = () => {
 
     const handleToggleMultipleWins = async () => {
         try {
-            const response = await axios.put('/api/settings', {
+            const response = await api.put('/api/settings', {
                 allowMultipleWins: !allowMultipleWins
             });
             setAllowMultipleWins(response.data.allowMultipleWins);
@@ -45,7 +45,7 @@ const AdvancedSettings: React.FC = () => {
 
     const handlePasswordReset = async () => {
         try {
-            await axios.post('/api/auth/reset-password');
+            await api.post('/api/auth/reset-password');
             alert('管理员已重置，请重新初始化');
             localStorage.removeItem('token');
             navigate('/login');

@@ -23,7 +23,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import EditIcon from '@mui/icons-material/Edit';
-import axios from 'axios';
+import api from '../../utils/axios';
 
 interface User {
   _id: string;
@@ -53,7 +53,7 @@ const UserManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get('/api/users', {
+      const response = await api.get('/api/users', {
         params: {
           page: page + 1,
           limit: rowsPerPage,
@@ -100,7 +100,7 @@ const UserManagement: React.FC = () => {
             return { alias, nickname };
           });
 
-          const response = await axios.post('/api/users/preview-import', { users });
+          const response = await api.post('/api/users/preview-import', { users });
           setImportPreview(response.data);
         } catch (err) {
           alert('解析文件失败');
@@ -116,7 +116,7 @@ const UserManagement: React.FC = () => {
     if (!importPreview) return;
 
     try {
-      await axios.post('/api/users/batch-import', {
+      await api.post('/api/users/batch-import', {
         newUsers: importPreview.newUsers,
         updateUsers: importPreview.updateUsers
       });
@@ -131,7 +131,7 @@ const UserManagement: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/users/${id}`);
+      await api.delete(`/api/users/${id}`);
       fetchUsers();
       setDeleteDialog(false);
     } catch (err) {
@@ -143,7 +143,7 @@ const UserManagement: React.FC = () => {
     if (!selectedUsers.length) return;
 
     try {
-      await axios.post('/api/users/batch-delete', { ids: selectedUsers });
+      await api.post('/api/users/batch-delete', { ids: selectedUsers });
       setSelectedUsers([]);
       fetchUsers();
       setBatchDeleteDialog(false);
@@ -155,9 +155,9 @@ const UserManagement: React.FC = () => {
   const handleToggleActive = async (user: User) => {
     try {
       if (user.isActive) {
-        await axios.post(`/api/users/deactivate/${user.alias}`);
+        await api.post(`/api/users/deactivate/${user.alias}`);
       } else {
-        await axios.post(`/api/users/admin/activate/${user._id}`);
+        await api.post(`/api/users/admin/activate/${user._id}`);
       }
       fetchUsers();
     } catch (err: any) {
@@ -169,7 +169,7 @@ const UserManagement: React.FC = () => {
     if (!editingUser) return;
     
     try {
-      await axios.put(`/api/users/${editingUser._id}`, {
+      await api.put(`/api/users/${editingUser._id}`, {
         alias: editingUser.alias,
         nickname: editingUser.nickname
       });

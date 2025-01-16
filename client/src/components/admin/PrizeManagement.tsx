@@ -21,7 +21,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 import EditIcon from '@mui/icons-material/Edit';
-import axios from 'axios';
+import api from '../../utils/axios';
 
 interface Prize {
   _id: string;
@@ -52,7 +52,7 @@ const PrizeManagement: React.FC = () => {
 
   const fetchPrizes = async () => {
     try {
-      const response = await axios.get('/api/prizes', {
+      const response = await api.get('/api/prizes', {
         params: {
           page: page + 1,
           limit: rowsPerPage
@@ -85,7 +85,7 @@ const PrizeManagement: React.FC = () => {
       formData.append('image', file);
 
       try {
-        const response = await axios.post('/api/prizes/upload', formData);
+        const response = await api.post('/api/prizes/upload', formData);
         setNewPrize(prev => ({ ...prev, image: response.data.url }));
         setImagePreview(response.data.url);
       } catch (err) {
@@ -96,7 +96,7 @@ const PrizeManagement: React.FC = () => {
 
   const handleCreate = async () => {
     try {
-      await axios.post('/api/prizes', newPrize);
+      await api.post('/api/prizes', newPrize);
       setCreateDialog(false);
       setNewPrize({
         name: '',
@@ -115,7 +115,7 @@ const PrizeManagement: React.FC = () => {
     if (!selectedPrize) return;
 
     try {
-      await axios.delete(`/api/prizes/${selectedPrize._id}`);
+      await api.delete(`/api/prizes/${selectedPrize._id}`);
       setDeleteDialog(false);
       setSelectedPrize(null);
       fetchPrizes();
@@ -128,7 +128,7 @@ const PrizeManagement: React.FC = () => {
     if (!editingPrize) return;
     
     try {
-      await axios.put(`/api/prizes/${editingPrize._id}`, editingPrize);
+      await api.put(`/api/prizes/${editingPrize._id}`, editingPrize);
       setEditDialog(false);
       setEditingPrize(null);
       fetchPrizes();

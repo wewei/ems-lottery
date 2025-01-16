@@ -10,7 +10,7 @@ import {
   Button
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/axios';
 import Header from '../components/Header';
 
 interface Prize {
@@ -38,13 +38,13 @@ const Lottery: React.FC = () => {
       return;
     }
 
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     const fetchData = async () => {
       try {
         const [prizesRes, statsRes] = await Promise.all([
-          axios.get('/api/prizes'),
-          axios.get('/api/users/stats')
+          api.get('/api/prizes'),
+          api.get('/api/users/stats')
         ]);
         setPrizes(prizesRes.data.prizes);
         setStats(statsRes.data);
@@ -60,7 +60,7 @@ const Lottery: React.FC = () => {
     fetchData();
 
     return () => {
-      delete axios.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common['Authorization'];
     };
   }, [navigate]);
 

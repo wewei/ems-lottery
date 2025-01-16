@@ -12,7 +12,7 @@ import {
   DialogActions
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/axios';
 import Header from '../components/Header';
 import SlotMachine from '../components/SlotMachine';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -59,14 +59,14 @@ const LotteryDraw: React.FC = () => {
     }
 
     // 添加认证请求头
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
     const fetchData = async () => {
       try {
         const [prizeRes, statsRes, usersRes] = await Promise.all([
-          axios.get(`/api/prizes/${prizeId}`),
-          axios.get('/api/users/stats'),
-          axios.get('/api/users/active', {
+          api.get(`/api/prizes/${prizeId}`),
+          api.get('/api/users/stats'),
+          api.get('/api/users/active', {
             params: { prizeId }
           })
         ]);
@@ -82,7 +82,7 @@ const LotteryDraw: React.FC = () => {
     fetchData();
 
     return () => {
-      delete axios.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common['Authorization'];
     };
   }, [prizeId, navigate]);
 
@@ -94,13 +94,13 @@ const LotteryDraw: React.FC = () => {
   const handleSlotMachineStop = async (selectedIndexes: number[]) => {
     try {
       const selectedUsers = selectedIndexes.map(index => activeUsers[index]);
-      const response = await axios.post(`/api/lottery/draw/${prizeId}`, {
+      const response = await api.post(`/api/lottery/draw/${prizeId}`, {
         winners: selectedUsers
       });
       const [prizeRes, statsRes, usersRes] = await Promise.all([
-        axios.get(`/api/prizes/${prizeId}`),
-        axios.get('/api/users/stats'),
-        axios.get('/api/users/active', {
+        api.get(`/api/prizes/${prizeId}`),
+        api.get('/api/users/stats'),
+        api.get('/api/users/active', {
           params: { prizeId }
         })
       ]);

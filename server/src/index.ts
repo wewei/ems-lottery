@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -8,7 +8,9 @@ import prizeRoutes from './routes/prize';
 import lotteryRoutes from './routes/lottery';
 import userRoutes from './routes/users';
 import drawRecordRoutes from './routes/drawRecords';
+import settingsRoutes from './routes/settings';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { authenticateToken } from './middleware/auth';
 
 dotenv.config();
 
@@ -24,11 +26,11 @@ mongoose.connect(process.env.AZURE_COSMOS_CONNECTIONSTRING || process.env.MONGOD
 
 // 路由
 app.use('/api/auth', authRoutes);
-app.use('/api/prizes', prizeRoutes);
-app.use('/api/lottery', lotteryRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/draw-records', drawRecordRoutes);
-
+app.use('/api/prizes', authenticateToken as RequestHandler, prizeRoutes);
+app.use('/api/lottery', authenticateToken as RequestHandler, lotteryRoutes);
+app.use('/api/draw-records', authenticateToken as RequestHandler, drawRecordRoutes);
+app.use('/api/settings', authenticateToken as RequestHandler, settingsRoutes);
 // 开发环境代理到 Vite
 if (isDev) {
   app.use('/', createProxyMiddleware({
