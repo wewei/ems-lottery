@@ -55,6 +55,8 @@ const UserManagement: React.FC = () => {
     alias: '',
     nickname: ''
   });
+  const [batchActivateDialog, setBatchActivateDialog] = useState(false);
+  const [batchDeactivateDialog, setBatchDeactivateDialog] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -202,6 +204,37 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleBatchActivate = async () => {
+    try {
+      await Promise.all(
+        selectedUsers.map(id => 
+          api.post(`/api/users/admin/activate/${id}`)
+        )
+      );
+      setSelectedUsers([]);
+      fetchUsers();
+      setBatchActivateDialog(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || '批量激活失败');
+    }
+  };
+
+  const handleBatchDeactivate = async () => {
+    try {
+      await Promise.all(
+        selectedUsers.map(id => {
+          const user = users.find(u => u._id === id);
+          return api.post(`/api/users/deactivate/${user?.alias}`);
+        })
+      );
+      setSelectedUsers([]);
+      fetchUsers();
+      setBatchDeactivateDialog(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || '批量取消激活失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -240,14 +273,36 @@ const UserManagement: React.FC = () => {
           </Button>
         )}
         {selectedUsers.length > 0 && (
-          <Button
-            variant="contained"
-            color="error"
-            startIcon={<DeleteSweepIcon />}
-            onClick={() => setBatchDeleteDialog(true)}
-          >
-            批量删除
-          </Button>
+          <>
+            <Button
+              variant="contained"
+              color="error"
+              startIcon={<DeleteSweepIcon />}
+              onClick={() => setBatchDeleteDialog(true)}
+            >
+              批量删除
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={() => setBatchActivateDialog(true)}
+              disabled={!selectedUsers.some(id => 
+                users.find(u => u._id === id && !u.isActive)
+              )}
+            >
+              批量激活
+            </Button>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={() => setBatchDeactivateDialog(true)}
+              disabled={!selectedUsers.some(id => 
+                users.find(u => u._id === id && u.isActive)
+              )}
+            >
+              批量取消激活
+            </Button>
+          </>
         )}
       </Box>
 
@@ -439,6 +494,40 @@ const UserManagement: React.FC = () => {
             disabled={!newUser.alias || !newUser.nickname}
           >
             创建
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={batchActivateDialog} onClose={() => setBatchActivateDialog(false)}>
+        <DialogTitle>确认批量激活</DialogTitle>
+        <DialogContent>
+          <Typography>
+            确定要激活选中的 {selectedUsers.length} 个用户吗？
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBatchActivateDialog(false)}>取消</Button>
+          <Button onClick={handleBatchActivate} color="success">
+            确认激活
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={batchDeactivateDialog} onClose={() => setBatchDeactivateDialog(false)}>
+        <DialogTitle>确认批量取消激活</DialogTitle>
+        <DialogContent>
+          <Typography>
+            确定要取消激活选中的 {
+              selectedUsers.filter(id => 
+                users.find(u => u._id === id && u.isActive)
+              ).length
+            } 个用户吗？
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBatchDeactivateDialog(false)}>取消</Button>
+          <Button onClick={handleBatchDeactivate} color="warning">
+            确认取消激活
           </Button>
         </DialogActions>
       </Dialog>
