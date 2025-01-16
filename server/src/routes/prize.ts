@@ -32,29 +32,22 @@ router.get('/', (async (req: Request, res: Response) => {
     
     const [prizes, total] = await Promise.all([
       Prize.find()
-        .sort({ name: 1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
-        .exec() as unknown as Promise<Array<{ 
-          _id: string;
-          name: string;
-          image: { data: Buffer; contentType: string };
-          totalQuantity: number;
-          drawQuantity: number;
-          remaining: number;
-        }>>,
+        .exec(),
       Prize.countDocuments()
     ]);
 
-    // 转换图片数据为 base64
-    const prizesWithBase64 = prizes.map(prize => ({
+    // 处理图片数据
+    const processedPrizes = prizes.map(prize => ({
       ...prize,
       image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null
     }));
 
-    res.json({ 
-      prizes: prizesWithBase64,
+    res.json({
+      prizes: processedPrizes,
       total,
       page,
       pages: Math.ceil(total / limit)
@@ -172,6 +165,24 @@ router.delete('/:id', (async (req: Request, res: Response) => {
     }
 
     res.json({ message: '奖项已删除' });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 获取单个奖项
+router.get('/:id', (async (req: Request, res: Response) => {
+  try {
+    const prize = await Prize.findById(req.params.id).lean().exec();
+    if (!prize) {
+      return res.status(404).json({ message: '奖项不存在' });
+    }
+    // 处理图片数据
+    const processedPrize = {
+      ...prize,
+      image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null
+    };
+    res.json({ prize: processedPrize });
   } catch (err) {
     res.status(500).json({ message: '服务器错误' });
   }

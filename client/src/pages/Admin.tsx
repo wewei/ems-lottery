@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Container, Box, Paper, Tabs, Tab } from '@mui/material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import axios from 'axios';
+import Header from '../components/Header';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -57,21 +58,24 @@ const Admin: React.FC = () => {
   };
 
   return (
-    <Container>
-      <Box sx={{ width: '100%', mt: 4 }}>
-        <Paper>
-          <Tabs value={getCurrentTab()} onChange={handleTabChange}>
-            <Tab label="奖项管理" />
-            <Tab label="用户管理" />
-            <Tab label="抽奖记录" />
-            <Tab label="密码重置" />
-          </Tabs>
-          <Box sx={{ p: 3 }}>
-            <Outlet />
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
+    <>
+      <Header title="管理后台" />
+      <Container>
+        <Box sx={{ width: '100%', mt: 4 }}>
+          <Paper>
+            <Tabs value={getCurrentTab()} onChange={handleTabChange}>
+              <Tab label="奖项管理" />
+              <Tab label="用户管理" />
+              <Tab label="抽奖记录" />
+              <Tab label="密码重置" />
+            </Tabs>
+            <Box sx={{ p: 3 }}>
+              <Outlet />
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
+    </>
   );
 };
 

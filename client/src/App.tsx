@@ -8,6 +8,8 @@ import PasswordReset from './components/admin/PasswordReset';
 import UserManagement from './components/admin/UserManagement';
 import PrizeManagement from './components/admin/PrizeManagement';
 import DrawRecordManagement from './components/admin/DrawRecordManagement';
+import Lottery from './pages/Lottery';
+import LotteryDraw from './pages/LotteryDraw';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/activate" element={<Activate />} />
         <Route path="/" element={<Navigate to="/activate" />} />
+        <Route path="/lottery" element={<Lottery />} />
+        <Route path="/lottery/:prizeId" element={<LotteryDraw />} />
       </Routes>
     </BrowserRouter>
   );
