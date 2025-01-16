@@ -7,6 +7,7 @@ import authRoutes from './routes/auth';
 import prizeRoutes from './routes/prize';
 import lotteryRoutes from './routes/lottery';
 import userRoutes from './routes/users';
+import drawRecordRoutes from './routes/drawRecords';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 
 dotenv.config();
@@ -26,6 +27,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/prizes', prizeRoutes);
 app.use('/api/lottery', lotteryRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/draw-records', drawRecordRoutes);
 
 // 开发环境代理到 Vite
 if (isDev) {
