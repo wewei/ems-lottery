@@ -2,6 +2,7 @@ import express, { Request, Response, Router, RequestHandler } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Admin from '../models/Admin';
+import { generateRandomPassword } from '../utils/password';
 
 const router: Router = express.Router();
 
@@ -80,6 +81,25 @@ router.post('/login', (async (req: AdminRequest, res: Response) => {
     );
 
     res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 重置管理员密码
+router.post('/reset-password', (async (req: Request, res: Response) => {
+  try {
+    const admin = await Admin.findOne();
+    if (!admin) {
+      return res.status(400).json({ message: '管理员未初始化' });
+    }
+
+    // 删除管理员记录
+    await Admin.deleteOne({ _id: admin._id });
+
+    res.json({ 
+      message: '管理员已重置'
+    });
   } catch (err) {
     res.status(500).json({ message: '服务器错误' });
   }

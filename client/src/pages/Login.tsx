@@ -34,10 +34,12 @@ const Login: React.FC = () => {
           setError('两次输入的密码不一致');
           return;
         }
-        await axios.post('/api/auth/init', { password });
+        const response = await axios.post('/api/auth/init', { password });
+        localStorage.setItem('token', response.data.token);
       } else {
         // 登录
-        await axios.post('/api/auth/login', { password });
+        const response = await axios.post('/api/auth/login', { password });
+        localStorage.setItem('token', response.data.token);
       }
       navigate('/admin'); // 登录成功后跳转
     } catch (err: any) {
