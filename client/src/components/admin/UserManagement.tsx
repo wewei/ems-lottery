@@ -50,6 +50,11 @@ const UserManagement: React.FC = () => {
   const [editDialog, setEditDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [createDialog, setCreateDialog] = useState(false);
+  const [newUser, setNewUser] = useState({
+    alias: '',
+    nickname: ''
+  });
 
   const fetchUsers = async () => {
     try {
@@ -94,13 +99,17 @@ const UserManagement: React.FC = () => {
       reader.onload = async (e) => {
         try {
           const text = e.target?.result as string;
-          const rows = text.split('\n').filter(row => row.trim());
-          const users = rows.map(row => {
-            const [alias, nickname] = row.split(',').map(field => field.trim());
-            return { alias, nickname };
-          });
+          const rows = text.split(/\r\n|\r|\n/)
+            .filter(row => row.trim())
+            .map(row => {
+              const [alias, nickname] = row
+                .split(',')
+                .map(field => field.trim().replace(/^["']|["']$/g, ''));
+              return { alias, nickname };
+            })
+            .filter(({ alias, nickname }) => alias && nickname);
 
-          const response = await api.post('/api/users/preview-import', { users });
+          const response = await api.post('/api/users/preview-import', { users: rows });
           setImportPreview(response.data);
         } catch (err) {
           alert('解析文件失败');
@@ -181,6 +190,17 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleCreateUser = async () => {
+    try {
+      await api.post('/api/users', newUser);
+      setCreateDialog(false);
+      setNewUser({ alias: '', nickname: '' });
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '创建用户失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -190,6 +210,12 @@ const UserManagement: React.FC = () => {
           onChange={(e) => setSearch(e.target.value)}
           size="small"
         />
+        <Button
+          variant="contained"
+          onClick={() => setCreateDialog(true)}
+        >
+          创建用户
+        </Button>
         <Button
           variant="contained"
           component="label"
@@ -307,7 +333,7 @@ const UserManagement: React.FC = () => {
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
-        rowsPerPageOptions={[10, 25, 50]}
+        rowsPerPageOptions={[10, 25, 50, 100, 200]}
       />
 
       <Dialog open={!!importPreview} onClose={() => setImportPreview(null)}>
@@ -382,6 +408,37 @@ const UserManagement: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setEditDialog(false)}>取消</Button>
           <Button onClick={handleEdit} color="primary">保存</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={createDialog} onClose={() => setCreateDialog(false)}>
+        <DialogTitle>创建用户</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="别名"
+              value={newUser.alias}
+              onChange={(e) => setNewUser(prev => ({ ...prev, alias: e.target.value }))}
+              fullWidth
+              required
+            />
+            <TextField
+              label="昵称"
+              value={newUser.nickname}
+              onChange={(e) => setNewUser(prev => ({ ...prev, nickname: e.target.value }))}
+              fullWidth
+              required
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCreateDialog(false)}>取消</Button>
+          <Button 
+            onClick={handleCreateUser}
+            disabled={!newUser.alias || !newUser.nickname}
+          >
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

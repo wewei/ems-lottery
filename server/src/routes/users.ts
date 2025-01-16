@@ -3,6 +3,8 @@ import User from '../models/User';
 import DrawRecord from '../models/DrawRecord';
 import Setting from '../models/Setting';
 import { authenticateToken } from '../middleware/auth';
+import fs from 'fs';
+import multer from 'multer';
 
 interface ImportUser {
   alias: string;
@@ -10,6 +12,7 @@ interface ImportUser {
 }
 
 const router: Router = express.Router();
+const upload = multer();
 
 // 创建用户
 router.post('/', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
@@ -403,6 +406,34 @@ router.get('/active', (async (req: Request, res: Response) => {
     res.json({ users });
   } catch (err) {
     res.status(500).json({ message: '获取用户列表失败' });
+  }
+}) as RequestHandler);
+
+// 导入用户
+router.post('/import', upload.single('file'), (async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: '未上传文件' });
+    }
+
+    const fileContent = fs.readFileSync(req.file.path, 'utf-8');
+    // 支持 \r\n (Windows), \n (Unix), \r (Mac) 换行符
+    const rows = fileContent.split(/\r\n|\r|\n/).filter(row => row.trim());
+
+    const users = [];
+    for (let i = 1; i < rows.length; i++) {
+      const [alias, nickname] = rows[i]
+        .split(',')
+        .map(field => field.trim().replace(/^["']|["']$/g, '')); // 处理引号和空格
+
+      if (alias && nickname) {
+        users.push({ alias, nickname });
+      }
+    }
+
+    // ... 其他代码
+  } catch (err) {
+    res.status(500).json({ message: '导入失败' });
   }
 }) as RequestHandler);
 
