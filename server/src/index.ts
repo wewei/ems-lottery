@@ -42,7 +42,8 @@ if (isDev) {
   });
 }
 
-const PORT = process.env.PORT || 3000;
+// Azure Web Apps 使用环境变量 WEBSITE_HOSTNAME 来指示应用程序的主机名
+const PORT = process.env.PORT || process.env.WEBSITE_PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 }); 
