@@ -11,10 +11,10 @@ const Admin: React.FC = () => {
   const getCurrentTab = () => {
     const path = location.pathname.split('/')[2] || 'password';
     const tabMap: { [key: string]: number } = {
-      password: 0,
+      prizes: 0,
       users: 1,
-      prizes: 2,
-      records: 3
+      records: 2,
+      password: 3
     };
     return tabMap[path] || 0;
   };
@@ -52,7 +52,7 @@ const Admin: React.FC = () => {
   }, [navigate]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    const paths = ['password', 'users', 'prizes', 'records'];
+    const paths = ['prizes', 'users', 'records', 'password'];
     navigate(`/admin/${paths[newValue]}`);
   };
 
@@ -61,10 +61,10 @@ const Admin: React.FC = () => {
       <Box sx={{ width: '100%', mt: 4 }}>
         <Paper>
           <Tabs value={getCurrentTab()} onChange={handleTabChange}>
-            <Tab label="密码重置" />
-            <Tab label="用户管理" />
             <Tab label="奖项管理" />
+            <Tab label="用户管理" />
             <Tab label="抽奖记录" />
+            <Tab label="密码重置" />
           </Tabs>
           <Box sx={{ p: 3 }}>
             <Outlet />

@@ -196,29 +196,6 @@ const PrizeManagement: React.FC = () => {
               onChange={(e) => setNewPrize(prev => ({ ...prev, name: e.target.value }))}
               sx={{ mb: 2 }}
             />
-            <Button
-              variant="contained"
-              component="label"
-              startIcon={<ImageIcon />}
-              sx={{ mb: 2 }}
-            >
-              上传图片
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </Button>
-            {imagePreview && (
-              <Box sx={{ mb: 2 }}>
-                <img 
-                  src={imagePreview} 
-                  alt="预览" 
-                  style={{ width: 100, height: 100, objectFit: 'cover' }} 
-                />
-              </Box>
-            )}
             <TextField
               fullWidth
               type="number"
@@ -233,7 +210,30 @@ const PrizeManagement: React.FC = () => {
               label="抽取数量"
               value={newPrize.drawQuantity}
               onChange={(e) => setNewPrize(prev => ({ ...prev, drawQuantity: parseInt(e.target.value) }))}
+              sx={{ mb: 2 }}
             />
+            <Button
+              variant="contained"
+              component="label"
+              startIcon={<ImageIcon />}
+            >
+              上传图片
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+            </Button>
+            {imagePreview && (
+              <Box sx={{ mb: 2, mt: 2 }}>
+                <img 
+                  src={imagePreview} 
+                  alt="预览" 
+                  style={{ width: 100, height: 100, objectFit: 'cover' }} 
+                />
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

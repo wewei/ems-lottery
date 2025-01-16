@@ -21,11 +21,11 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route path="" element={<Navigate to="password" />} />
-          <Route path="password" element={<PasswordReset />} />
-          <Route path="users" element={<UserManagement />} />
+          <Route path="" element={<Navigate to="prizes" />} />
           <Route path="prizes" element={<PrizeManagement />} />
+          <Route path="users" element={<UserManagement />} />
           <Route path="records" element={<DrawRecordManagement />} />
+          <Route path="password" element={<PasswordReset />} />
         </Route>
         <Route path="/login" element={<Login />} />
         <Route path="/activate" element={<Activate />} />
