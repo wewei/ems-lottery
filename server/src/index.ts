@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // 连接 MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lottery');
+mongoose.connect(process.env.AZURE_COSMOS_CONNECTIONSTRING || process.env.MONGODB_URI || 'mongodb://localhost:27017/lottery');
 
 // 路由
 app.use('/api/auth', authRoutes);

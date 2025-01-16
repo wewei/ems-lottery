@@ -35,6 +35,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ImageIcon from '@mui/icons-material/Image';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +54,61 @@ function TabPanel(props: TabPanelProps) {
     </div>
   );
 }
+
+// 图片上传组件
+const ImageUpload: React.FC<{
+  value: string;
+  onChange: (url: string) => void;
+}> = ({ value, onChange }) => {
+  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    try {
+      const response = await axios.post('/api/prizes/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      onChange(response.data.url);
+    } catch (err) {
+      alert('图片上传失败');
+    }
+  };
+  
+  return (
+    <Box sx={{ mt: 2, mb: 1 }}>
+      <input
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        id="image-upload"
+        onChange={handleUpload}
+      />
+      <label htmlFor="image-upload">
+        <Button
+          variant="outlined"
+          component="span"
+          startIcon={<ImageIcon />}
+        >
+          上传图片
+        </Button>
+      </label>
+      {value && (
+        <Box sx={{ mt: 2 }}>
+          <img
+            src={value}
+            alt="预览"
+            style={{ maxWidth: '100%', maxHeight: 200 }}
+          />
+        </Box>
+      )}
+    </Box>
+  );
+};
 
 const Admin: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
@@ -93,6 +149,18 @@ const Admin: React.FC = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [prizePage, setPrizePage] = useState(0);
+  const [prizeRowsPerPage, setPrizeRowsPerPage] = useState(10);
+  const [totalPrizes, setTotalPrizes] = useState(0);
+  const [addPrizeDialog, setAddPrizeDialog] = useState(false);
+  const [newPrize, setNewPrize] = useState({
+    name: '',
+    image: '',
+    totalQuantity: 0,
+    drawQuantity: 1
+  });
+  const [deletePrizeDialog, setDeletePrizeDialog] = useState(false);
+  const [deletePrize, setDeletePrize] = useState<{_id: string, name: string} | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -161,12 +229,19 @@ const Admin: React.FC = () => {
 
   const fetchPrizes = async () => {
     try {
-      const response = await axios.get('/api/prizes');
-      setPrizes(response.data.prizes || []);
+      const response = await axios.get(
+        `/api/prizes?page=${prizePage + 1}&limit=${prizeRowsPerPage}`
+      );
+      setPrizes(response.data.prizes);
+      setTotalPrizes(response.data.total);
     } catch (err) {
       console.error('获取奖项列表失败', err);
     }
   };
+
+  useEffect(() => {
+    fetchPrizes();
+  }, [prizePage, prizeRowsPerPage]);
 
   const handlePasswordReset = async () => {
     try {
@@ -361,6 +436,30 @@ const Admin: React.FC = () => {
     setSearchTimeout(timeoutId);
   };
 
+  const handleAddPrize = async () => {
+    try {
+      await axios.post('/api/prizes', newPrize);
+      setAddPrizeDialog(false);
+      setNewPrize({ name: '', image: '', totalQuantity: 0, drawQuantity: 1 });
+      fetchPrizes();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '添加奖项失败');
+    }
+  };
+
+  const handleDeletePrize = async () => {
+    if (!deletePrize) return;
+    
+    try {
+      await axios.delete(`/api/prizes/${deletePrize._id}`);
+      fetchPrizes();
+      setDeletePrizeDialog(false);
+      setDeletePrize(null);
+    } catch (err) {
+      alert('删除失败');
+    }
+  };
+
   return (
     <Container>
       <Box sx={{ width: '100%', mt: 4 }}>
@@ -508,23 +607,82 @@ const Admin: React.FC = () => {
           </TabPanel>
 
           <TabPanel value={tabValue} index={2}>
-            <List>
-              {prizes.map((prize) => (
-                <ListItem
-                  key={prize._id}
-                  secondaryAction={
-                    <Button onClick={() => handleEdit(prize, 'prize')}>
-                      编辑
-                    </Button>
-                  }
-                >
-                  <ListItemText
-                    primary={prize.name}
-                    secondary={`剩余数量: ${prize.remaining}/${prize.totalQuantity}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Box sx={{ mb: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setAddPrizeDialog(true)}
+              >
+                添加奖项
+              </Button>
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>名称</TableCell>
+                    <TableCell>图片</TableCell>
+                    <TableCell align="center">总数量</TableCell>
+                    <TableCell align="center">每次抽取</TableCell>
+                    <TableCell align="center">剩余数量</TableCell>
+                    <TableCell align="center">操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {prizes.map((prize) => (
+                    <TableRow
+                      key={prize._id}
+                    >
+                      <TableCell>{prize.name}</TableCell>
+                      <TableCell>
+                        <img 
+                          src={prize.image} 
+                          alt={prize.name} 
+                          style={{ height: 40, width: 'auto' }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">{prize.totalQuantity}</TableCell>
+                      <TableCell align="center">{prize.drawQuantity}</TableCell>
+                      <TableCell align="center">{prize.remaining}</TableCell>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          onClick={() => handleEdit(prize, 'prize')}
+                        >
+                          编辑
+                        </Button>
+                        <IconButton
+                          color="error"
+                          size="small"
+                          onClick={() => {
+                            setDeletePrize(prize);
+                            setDeletePrizeDialog(true);
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component="div"
+              count={totalPrizes}
+              page={prizePage}
+              onPageChange={(_, newPage) => setPrizePage(newPage)}
+              rowsPerPage={prizeRowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setPrizeRowsPerPage(parseInt(e.target.value, 10));
+                setPrizePage(0);
+              }}
+              rowsPerPageOptions={[10, 20, 50]}
+              labelRowsPerPage="每页行数"
+              labelDisplayedRows={({ from, to, count }) => 
+                `${from}-${to} 共 ${count !== -1 ? count : `超过 ${to}`}`
+              }
+            />
           </TabPanel>
 
           <Dialog open={addUserDialog} onClose={() => setAddUserDialog(false)}>
@@ -599,14 +757,9 @@ const Admin: React.FC = () => {
                       setEditItem({ ...editItem, name: e.target.value })
                     }
                   />
-                  <TextField
-                    fullWidth
-                    label="图片URL"
-                    margin="normal"
+                  <ImageUpload
                     value={editItem?.image || ''}
-                    onChange={(e) =>
-                      setEditItem({ ...editItem, image: e.target.value })
-                    }
+                    onChange={(url) => setEditItem({ ...editItem, image: url })}
                   />
                   <TextField
                     fullWidth
@@ -767,6 +920,63 @@ const Admin: React.FC = () => {
                 disabled={previewData.newUsers.length === 0 && previewData.updateUsers.length === 0}
               >
                 确认导入
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={addPrizeDialog} onClose={() => setAddPrizeDialog(false)}>
+            <DialogTitle>添加新奖项</DialogTitle>
+            <DialogContent>
+              <TextField
+                fullWidth
+                label="名称"
+                margin="normal"
+                value={newPrize.name}
+                onChange={(e) => setNewPrize({ ...newPrize, name: e.target.value })}
+              />
+              <ImageUpload
+                value={newPrize.image}
+                onChange={(url) => setNewPrize({ ...newPrize, image: url })}
+              />
+              <TextField
+                fullWidth
+                label="总数量"
+                type="number"
+                margin="normal"
+                value={newPrize.totalQuantity}
+                onChange={(e) => setNewPrize({ ...newPrize, totalQuantity: parseInt(e.target.value) })}
+              />
+              <TextField
+                fullWidth
+                label="每次抽取数量"
+                type="number"
+                margin="normal"
+                value={newPrize.drawQuantity}
+                onChange={(e) => setNewPrize({ ...newPrize, drawQuantity: parseInt(e.target.value) })}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setAddPrizeDialog(false)}>取消</Button>
+              <Button 
+                onClick={handleAddPrize}
+                disabled={!newPrize.name || !newPrize.image || newPrize.totalQuantity <= 0}
+              >
+                添加
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={deletePrizeDialog} onClose={() => setDeletePrizeDialog(false)}>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogContent>
+              <Typography>
+                确定要删除奖项 "{deletePrize?.name}" 吗？此操作不可恢复。
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDeletePrizeDialog(false)}>取消</Button>
+              <Button onClick={handleDeletePrize} color="error">
+                删除
               </Button>
             </DialogActions>
           </Dialog>
