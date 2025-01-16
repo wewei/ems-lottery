@@ -5,7 +5,7 @@
     "server:dev": "cd server && npm run dev",
     "client:dev": "cd client && npm run dev",
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
-    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "preinstall": "cd client && npm install && cd ../server && npm install",
     "build": "cd client && npm run build && cd ../server && npm run build",
     "start": "cd server && npm run start",
     "postbuild": "node -e \"const fs=require('fs'); const path=require('path'); const dir='server/dist/public'; if(!fs.existsSync(dir)){fs.mkdirSync(dir, {recursive:true})}; fs.cpSync('client/dist', dir, {recursive:true})\""
