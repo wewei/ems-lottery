@@ -2,6 +2,16 @@
 
 一个功能完整的抽奖系统，支持用户激活、奖品管理、抽奖和记录查询等功能。
 
+## 界面预览
+
+### 抽奖界面
+![抽奖界面](snapshots/lottery.png)
+![抽奖界面](snapshots/lottery-ongoing.png)
+
+### 管理后台
+![管理后台](snapshots/admin.png)
+
+
 ## 功能特点
 
 ### 用户管理
