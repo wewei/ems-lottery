@@ -42,6 +42,7 @@ const AdvancedSettings: React.FC = () => {
     };
 
     const [resetDialog, setResetDialog] = useState(false);
+    const [resetPasswordDialog, setResetPasswordDialog] = useState(false);
     const [resetConfirmation, setResetConfirmation] = useState('');
     const RESET_CONFIRMATION_TEXT = '我确认重置数据';
 
@@ -54,7 +55,7 @@ const AdvancedSettings: React.FC = () => {
         } catch (err) {
             alert('密码修改失败');
         }
-        setResetDialog(false);
+        setResetPasswordDialog(false);
     };
 
     const handleResetSystem = async () => {
@@ -110,58 +111,47 @@ const AdvancedSettings: React.FC = () => {
                 </Typography>
             </Paper>
 
-            <Paper sx={{ p: 3 }}>
-                <Box sx={{ mt: 2 }}>
-                    <Button
-                        variant="contained"
-                        color="warning"
-                        onClick={() => setResetDialog(true)}
-                        sx={{ mt: 2 }}
-                    >
-                        重置管理员密码
-                    </Button>
-                </Box>
-
-                <Dialog open={resetDialog} onClose={() => setResetDialog(false)}>
-                    <DialogTitle>确认重置密码</DialogTitle>
-                    <DialogContent>
-                        <Typography>
-                            确定要重置管理员密码吗？重置后将返回登录页面。
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={() => setResetDialog(false)}>取消</Button>
-                        <Button onClick={handlePasswordReset} color="warning">
-                            确认重置
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Paper>
-
             <Paper sx={{ p: 3, mt: 3 }}>
                 <Typography variant="h6" color="error" gutterBottom>
                     危险区域
                 </Typography>
-                
-                <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
-                    <Box>
-                        <Button
-                            variant="contained"
-                            color="error"
-                            onClick={() => setResetDialog(true)}
-                            sx={{ mt: 2 }}
-                        >
-                            重置系统
-                        </Button>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                            此操作将删除所有用户、奖品和抽奖记录，系统将恢复到初始状态
-                        </Typography>
-                    </Box>
+                <Box sx={{ display: 'flex', gap: 2, flexDirection: 'row' }}>
+                    <Button
+                        variant="contained"
+                        color="warning"
+                        onClick={() => setResetPasswordDialog(true)}
+                        sx={{ mt: 2 }}
+                    >
+                        重置管理员密码
+                    </Button>
+
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => setResetDialog(true)}
+                        sx={{ mt: 2 }}
+                    >
+                        重置系统
+                    </Button>
                 </Box>
             </Paper>
+            <Dialog open={resetPasswordDialog} onClose={() => setResetPasswordDialog(false)}>
+                <DialogTitle>确认重置密码</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        确定要重置管理员密码吗？重置后将返回登录页面。
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setResetPasswordDialog(false)}>取消</Button>
+                    <Button onClick={handlePasswordReset} color="warning">
+                        确认重置
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
-            <Dialog 
-                open={resetDialog} 
+            <Dialog
+                open={resetDialog}
                 onClose={() => {
                     setResetDialog(false);
                     setResetConfirmation('');
@@ -181,11 +171,11 @@ const AdvancedSettings: React.FC = () => {
                     <Typography paragraph>
                         此操作不可撤销！如果确定要重置系统，请在下方输入：
                     </Typography>
-                    <Typography 
-                        component="div" 
-                        sx={{ 
-                            bgcolor: 'grey.100', 
-                            p: 1, 
+                    <Typography
+                        component="div"
+                        sx={{
+                            bgcolor: 'grey.100',
+                            p: 1,
                             borderRadius: 1,
                             fontWeight: 'bold',
                             mb: 2
@@ -200,14 +190,14 @@ const AdvancedSettings: React.FC = () => {
                         placeholder="请输入确认文本"
                         error={resetConfirmation !== '' && resetConfirmation !== RESET_CONFIRMATION_TEXT}
                         helperText={
-                            resetConfirmation !== '' && 
-                            resetConfirmation !== RESET_CONFIRMATION_TEXT && 
+                            resetConfirmation !== '' &&
+                            resetConfirmation !== RESET_CONFIRMATION_TEXT &&
                             '确认文本不匹配'
                         }
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button 
+                    <Button
                         onClick={() => {
                             setResetDialog(false);
                             setResetConfirmation('');
