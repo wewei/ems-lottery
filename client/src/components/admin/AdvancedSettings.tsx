@@ -7,7 +7,8 @@ import {
   FormControlLabel,
   Button,
   Alert,
-Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  TextField
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import api from '../../utils/axios';
@@ -41,7 +42,8 @@ const AdvancedSettings: React.FC = () => {
     };
 
     const [resetDialog, setResetDialog] = useState(false);
-    const navigate = useNavigate();
+    const [resetConfirmation, setResetConfirmation] = useState('');
+    const RESET_CONFIRMATION_TEXT = '我确认重置数据';
 
     const handlePasswordReset = async () => {
         try {
@@ -54,6 +56,26 @@ const AdvancedSettings: React.FC = () => {
         }
         setResetDialog(false);
     };
+
+    const handleResetSystem = async () => {
+        if (resetConfirmation !== RESET_CONFIRMATION_TEXT) {
+            alert('确认文本不匹配');
+            return;
+        }
+        
+        try {
+            await api.post('/api/settings/reset-system');
+            alert('系统已重置');
+            localStorage.removeItem('token');
+            navigate('/login');
+        } catch (err) {
+            alert('系统重置失败');
+        }
+        setResetDialog(false);
+        setResetConfirmation('');
+    };
+
+    const navigate = useNavigate();
 
     return (
         <Box>
@@ -115,6 +137,93 @@ const AdvancedSettings: React.FC = () => {
                     </DialogActions>
                 </Dialog>
             </Paper>
+
+            <Paper sx={{ p: 3, mt: 3 }}>
+                <Typography variant="h6" color="error" gutterBottom>
+                    危险区域
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
+                    <Box>
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => setResetDialog(true)}
+                            sx={{ mt: 2 }}
+                        >
+                            重置系统
+                        </Button>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                            此操作将删除所有用户、奖品和抽奖记录，系统将恢复到初始状态
+                        </Typography>
+                    </Box>
+                </Box>
+            </Paper>
+
+            <Dialog 
+                open={resetDialog} 
+                onClose={() => {
+                    setResetDialog(false);
+                    setResetConfirmation('');
+                }}
+            >
+                <DialogTitle>系统重置确认</DialogTitle>
+                <DialogContent>
+                    <Typography color="error" paragraph sx={{ mt: 2 }}>
+                        警告：此操作将删除所有数据！包括：
+                    </Typography>
+                    <ul>
+                        <li>所有用户信息</li>
+                        <li>所有奖品设置</li>
+                        <li>所有抽奖记录</li>
+                        <li>所有系统设置</li>
+                    </ul>
+                    <Typography paragraph>
+                        此操作不可撤销！如果确定要重置系统，请在下方输入：
+                    </Typography>
+                    <Typography 
+                        component="div" 
+                        sx={{ 
+                            bgcolor: 'grey.100', 
+                            p: 1, 
+                            borderRadius: 1,
+                            fontWeight: 'bold',
+                            mb: 2
+                        }}
+                    >
+                        {RESET_CONFIRMATION_TEXT}
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        value={resetConfirmation}
+                        onChange={(e) => setResetConfirmation(e.target.value)}
+                        placeholder="请输入确认文本"
+                        error={resetConfirmation !== '' && resetConfirmation !== RESET_CONFIRMATION_TEXT}
+                        helperText={
+                            resetConfirmation !== '' && 
+                            resetConfirmation !== RESET_CONFIRMATION_TEXT && 
+                            '确认文本不匹配'
+                        }
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button 
+                        onClick={() => {
+                            setResetDialog(false);
+                            setResetConfirmation('');
+                        }}
+                    >
+                        取消
+                    </Button>
+                    <Button
+                        onClick={handleResetSystem}
+                        color="error"
+                        disabled={resetConfirmation !== RESET_CONFIRMATION_TEXT}
+                    >
+                        确认重置
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 };

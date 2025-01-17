@@ -206,11 +206,22 @@ const UserManagement: React.FC = () => {
 
   const handleBatchActivate = async () => {
     try {
-      await Promise.all(
-        selectedUsers.map(id => 
-          api.post(`/api/users/admin/activate/${id}`)
-        )
-      );
+      const aliases = selectedUsers
+        .map(id => users.find(u => u._id === id))
+        .filter(user => user && !user.isActive)
+        .map(user => user!.alias);
+
+      if (aliases.length === 0) {
+        alert('没有需要激活的用户');
+        return;
+      }
+
+      const response = await api.post('/api/users/batch-activate', { aliases });
+      
+      if (response.data.activated.length > 0) {
+        alert(`成功激活 ${response.data.activated.length} 个用户`);
+      }
+
       setSelectedUsers([]);
       fetchUsers();
       setBatchActivateDialog(false);
@@ -221,12 +232,22 @@ const UserManagement: React.FC = () => {
 
   const handleBatchDeactivate = async () => {
     try {
-      await Promise.all(
-        selectedUsers.map(id => {
-          const user = users.find(u => u._id === id);
-          return api.post(`/api/users/deactivate/${user?.alias}`);
-        })
-      );
+      const aliases = selectedUsers
+        .map(id => users.find(u => u._id === id))
+        .filter(user => user && user.isActive)
+        .map(user => user!.alias);
+
+      if (aliases.length === 0) {
+        alert('没有需要取消激活的用户');
+        return;
+      }
+
+      const response = await api.post('/api/users/batch-deactivate', { aliases });
+
+      if (response.data.deactivated.length > 0) {
+        alert(`成功取消激活 ${response.data.deactivated.length} 个用户`);
+      }
+
       setSelectedUsers([]);
       fetchUsers();
       setBatchDeactivateDialog(false);

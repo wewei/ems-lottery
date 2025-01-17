@@ -1,5 +1,5 @@
 import express, { Request, Response, Router, RequestHandler } from 'express';
-import User from '../models/User';
+import User, { IUser } from '../models/User';
 import DrawRecord from '../models/DrawRecord';
 import Setting from '../models/Setting';
 import { authenticateToken } from '../middleware/auth';
@@ -433,6 +433,73 @@ router.post('/import', upload.single('file'), (async (req: Request, res: Respons
     // ... 其他代码
   } catch (err) {
     res.status(500).json({ message: '导入失败' });
+  }
+}) as RequestHandler);
+
+// 批量激活用户
+router.post('/batch-activate', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+  try {
+    const { aliases } = req.body;
+    if (!Array.isArray(aliases)) {
+      return res.status(400).json({ message: '无效的用户列表' });
+    }
+
+    const users = await User.find({ alias: { $in: aliases } });
+    const activated: IUser[] = [];
+    const unchanged: IUser[] = [];
+
+    for (const user of users) {
+      if (!user.isActive) {
+        user.isActive = true;
+        user.activatedFrom = {
+          browserId: `admin-${Date.now()}`,
+          activatedAt: new Date()
+        };
+        await user.save();
+        activated.push(user);
+      } else {
+        unchanged.push(user);
+      }
+    }
+
+    res.json({
+      activated: activated.map(u => ({ alias: u.alias, nickname: u.nickname })),
+      unchanged: unchanged.map(u => ({ alias: u.alias, nickname: u.nickname }))
+    });
+  } catch (err) {
+    res.status(500).json({ message: '批量激活失败' });
+  }
+}) as RequestHandler);
+
+// 批量撤销激活
+router.post('/batch-deactivate', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+  try {
+    const { aliases } = req.body;
+    if (!Array.isArray(aliases)) {
+      return res.status(400).json({ message: '无效的用户列表' });
+    }
+
+    const users = await User.find({ alias: { $in: aliases } });
+    const deactivated: IUser[] = [];
+    const unchanged: IUser[] = [];
+
+    for (const user of users) {
+      if (user.isActive) {
+        user.isActive = false;
+        user.activatedFrom = undefined;
+        await user.save();
+        deactivated.push(user);
+      } else {
+        unchanged.push(user);
+      }
+    }
+
+    res.json({
+      deactivated: deactivated.map(u => ({ alias: u.alias, nickname: u.nickname })),
+      unchanged: unchanged.map(u => ({ alias: u.alias, nickname: u.nickname }))
+    });
+  } catch (err) {
+    res.status(500).json({ message: '批量撤销激活失败' });
   }
 }) as RequestHandler);
 
