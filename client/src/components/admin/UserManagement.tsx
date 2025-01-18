@@ -183,7 +183,7 @@ const UserManagement: React.FC = () => {
     if (!editingUser) return;
     
     try {
-      await api.put(`/api/users/${editingUser._id}`, {
+      await api.post(`/api/users/${editingUser._id}`, {
         alias: editingUser.alias,
         nickname: editingUser.nickname
       });
@@ -270,7 +270,7 @@ const UserManagement: React.FC = () => {
 
   const handleDeleteTestUsers = async () => {
     try {
-      const response = await api.delete('/api/users/test-users');
+      const response = await api.post('/api/users/delete-test-users');
       alert(response.data.message);
       fetchUsers();
     } catch (err: any) {

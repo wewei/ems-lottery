@@ -31,7 +31,7 @@ const AdvancedSettings: React.FC = () => {
 
     const handleToggleMultipleWins = async () => {
         try {
-            const response = await api.put('/api/settings', {
+            const response = await api.post('/api/settings', {
                 allowMultipleWins: !allowMultipleWins
             });
             setAllowMultipleWins(response.data.allowMultipleWins);

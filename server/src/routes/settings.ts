@@ -19,7 +19,7 @@ router.get('/', authenticateToken as RequestHandler, (async (req: Request, res: 
 }) as RequestHandler);
 
 // 更新设置
-router.put('/', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+router.post('/', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { allowMultipleWins } = req.body;
     const settings = await Setting.getInstance();

@@ -83,7 +83,7 @@ router.get('/', authenticateToken as RequestHandler, (async (req: Request, res: 
 }) as RequestHandler);
 
 // 更新用户
-router.put('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const update = req.body;

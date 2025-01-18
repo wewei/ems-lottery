@@ -128,7 +128,7 @@ const PrizeManagement: React.FC = () => {
     if (!editingPrize) return;
     
     try {
-      await api.put(`/api/prizes/${editingPrize._id}`, editingPrize);
+      await api.post(`/api/prizes/${editingPrize._id}`, editingPrize);
       setEditDialog(false);
       setEditingPrize(null);
       fetchPrizes();

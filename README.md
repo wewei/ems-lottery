@@ -145,7 +145,7 @@ lottery-app/
 ### 奖品相关
 - `POST /api/prizes` - 创建奖品
 - `GET /api/prizes` - 获取奖品列表
-- `PUT /api/prizes/:id` - 更新奖品
+- `POST /api/prizes/:id` - 更新奖品
 - `DELETE /api/prizes/:id` - 删除奖品
 - `POST /api/prizes/upload` - 上传奖品图片
 
@@ -156,7 +156,7 @@ lottery-app/
 
 ### 系统管理
 - `GET /api/settings` - 获取系统设置
-- `PUT /api/settings` - 更新系统设置
+- `POST /api/settings` - 更新系统设置
 - `POST /api/settings/reset-system` - 重置系统
 - `POST /api/auth/login` - 管理员登录
 - `POST /api/auth/reset-password` - 重置管理员密码
