@@ -1,14 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
-import userRoutes from './routes/users';
-import prizeRoutes from './routes/prize';
-import lotteryRoutes from './routes/lottery';
-import settingsRoutes from './routes/settings';
-import { authenticateToken } from './middleware/auth';
-import path from 'path';
-import { createProxyMiddleware } from 'http-proxy-middleware';
 
 const app = express();
 

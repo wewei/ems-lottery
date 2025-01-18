@@ -18,11 +18,46 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const app = express();
 
+// 配置 body-parser 限制
+app.use(express.json({ limit: '10mb' }));  // 增加 JSON 请求体大小限制
+app.use(express.urlencoded({ limit: '10mb', extended: true }));  // 增加 URL 编码请求体大小限制
+
 app.use(cors());
-app.use(express.json());
+
+// MongoDB 连接配置
+const mongoUri = process.env.AZURE_COSMOS_CONNECTIONSTRING || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/lottery';
 
 // 连接 MongoDB
-mongoose.connect(process.env.AZURE_COSMOS_CONNECTIONSTRING || process.env.MONGODB_URI || 'mongodb://localhost:27017/lottery');
+mongoose.connect(mongoUri)
+  .then(() => {
+    console.log('Successfully connected to MongoDB.');
+  })
+  .catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  });
+
+// 监听数据库连接事件
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+});
+
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  process.exit(0);
+});
+
+// 添加调试中间件
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
 
 // 路由
 app.use('/api/auth', authRoutes);

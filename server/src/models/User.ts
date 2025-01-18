@@ -13,7 +13,7 @@ export interface IUser extends Document {
 const UserSchema: Schema = new Schema({
   alias: { 
     type: String, 
-    required: true, 
+    required: true,
     unique: true,
     trim: true 
   },
@@ -23,8 +23,8 @@ const UserSchema: Schema = new Schema({
     trim: true 
   },
   isActive: { 
-    type: Boolean, 
-    default: false 
+    type: Boolean,
+    default: false
   },
   activatedFrom: {
     browserId: { 

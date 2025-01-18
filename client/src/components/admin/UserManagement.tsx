@@ -23,6 +23,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import api from '../../utils/axios';
 
 interface User {
@@ -256,6 +258,26 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleGenerateTestUsers = async () => {
+    try {
+      const response = await api.post('/api/users/generate-test?count=10');
+      alert(response.data.message);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '生成测试用户失败');
+    }
+  };
+
+  const handleDeleteTestUsers = async () => {
+    try {
+      const response = await api.delete('/api/users/test-users');
+      alert(response.data.message);
+      fetchUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.message || '删除测试用户失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -265,6 +287,22 @@ const UserManagement: React.FC = () => {
           onChange={(e) => setSearch(e.target.value)}
           size="small"
         />
+        <Button
+          variant="contained"
+          color="info"
+          startIcon={<AddIcon />}
+          onClick={handleGenerateTestUsers}
+        >
+          生成测试用户
+        </Button>
+        <Button
+          variant="contained"
+          color="warning"
+          startIcon={<CleaningServicesIcon />}
+          onClick={handleDeleteTestUsers}
+        >
+          清理测试用户
+        </Button>
         <Button
           variant="contained"
           onClick={() => setCreateDialog(true)}

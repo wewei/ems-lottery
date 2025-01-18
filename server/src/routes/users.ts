@@ -5,6 +5,8 @@ import Setting from '../models/Setting';
 import { authenticateToken } from '../middleware/auth';
 import fs from 'fs';
 import multer from 'multer';
+import bcrypt from 'bcryptjs';
+import { generateTestUsers } from '../utils/userGenerator';
 
 interface ImportUser {
   alias: string;
@@ -502,6 +504,66 @@ router.post('/batch-deactivate', authenticateToken as RequestHandler, (async (re
     res.status(500).json({ message: '批量撤销激活失败' });
   }
 }) as RequestHandler);
+
+// 生成测试用户
+router.post('/generate-test', authenticateToken as RequestHandler, async (req: Request, res: Response) => {
+  try {
+    const count = parseInt(req.query.count as string) || 10; // 默认生成10个用户
+    const testUsers = generateTestUsers(count);
+    
+    const createdUsers = await Promise.all(
+      testUsers.map(async (userData) => {
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        
+        const user = new User({
+          alias: userData.alias,
+          nickname: userData.nickname,
+          password: hashedPassword,
+          isTest: true // 标记为测试用户
+        });
+        
+        return user.save();
+      })
+    );
+
+    res.status(201).json({
+      message: `成功生成 ${createdUsers.length} 个测试用户`,
+      users: createdUsers.map(user => ({
+        alias: user.alias,
+        nickname: user.nickname,
+        _id: user._id
+      }))
+    });
+  } catch (error) {
+    console.error('生成测试用户失败:', error);
+    res.status(500).json({ message: '生成测试用户失败' });
+  }
+});
+
+// 删除测试用户
+router.post('/delete-test-users', authenticateToken as RequestHandler, async (req: Request, res: Response) => {
+  console.log('删除测试用户');
+  try {
+    // 先找到所有测试用户
+    const testUsers = await User.find({ alias: /^test-/ });
+    console.log(`找到 ${testUsers.length} 个测试用户`);
+
+    // 删除这些用户
+    const result = await User.deleteMany({ alias: /^test-/ });
+    console.log('删除结果:', result);
+
+    res.json({ 
+      message: `成功删除 ${result.deletedCount} 个测试用户`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('删除测试用户时发生错误:', error);
+    res.status(500).json({ 
+      message: '删除测试用户失败',
+      error: error instanceof Error ? error.message : '未知错误'
+    });
+  }
+});
 
 // ... 其他路由
 
