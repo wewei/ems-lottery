@@ -44,8 +44,6 @@ const LotteryDraw: React.FC = () => {
   const navigate = useNavigate();
   const [prize, setPrize] = useState<Prize | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [winners, setWinners] = useState<Winner[]>([]);
-  const [showResult, setShowResult] = useState(false);
   const [stats, setStats] = useState<Stats>({ activeUserCount: 0 });
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [isSlotMachineVisible, setIsSlotMachineVisible] = useState(false);
@@ -91,11 +89,11 @@ const LotteryDraw: React.FC = () => {
     setIsSlotMachineVisible(true);
   };
 
-  const handleSlotMachineStop = async (selectedIndexes: number[]) => {
+  const handleSlotMachineStop = async (users: ActiveUser[]) => {
     try {
-      const selectedUsers = selectedIndexes.map(index => activeUsers[index]);
+      console.log('users', users);
       const response = await api.post(`/api/lottery/draw/${prizeId}`, {
-        winners: selectedUsers
+        winners: users
       });
       const [prizeRes, statsRes, usersRes] = await Promise.all([
         api.get(`/api/prizes/${prizeId}`),
@@ -110,18 +108,17 @@ const LotteryDraw: React.FC = () => {
       });
       setStats(statsRes.data);
       setActiveUsers(usersRes.data.users);
-      setWinners(response.data.winners);
-      setShowResult(true);
     } catch (err: any) {
       alert(err.response?.data?.message || '抽奖失败');
     } finally {
       setIsDrawing(false);
-      setIsSlotMachineVisible(false);
     }
   };
 
-  const handleCloseResult = () => {
-    setShowResult(false);
+  const handleReturn = () => {
+    console.log('handleReturn');
+    setIsSlotMachineVisible(false);
+    setIsDrawing(false);
   };
 
   const getButtonText = () => {
@@ -194,36 +191,10 @@ const LotteryDraw: React.FC = () => {
               users={activeUsers}
               drawQuantity={Math.min(prize.drawQuantity, prize.remaining)}
               onStop={handleSlotMachineStop}
+              onReturn={handleReturn}
             />
           )}
         </Box>
-
-        <Dialog 
-          open={showResult} 
-          onClose={handleCloseResult}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>
-            抽奖结果
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ textAlign: 'center', py: 2 }}>
-              {winners.map((winner, index) => (
-                <Typography key={index} variant="h6" gutterBottom>
-                  {winner.nickname} ({winner.alias})
-                </Typography>
-              ))}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button 
-              onClick={handleCloseResult}
-            >
-              确定
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Container>
     </>
   );

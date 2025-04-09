@@ -8,7 +8,8 @@ interface SlotMachineProps {
   }>;
   drawQuantity: number;
   speed?: number;
-  onStop: (selectedIndexes: number[]) => void;
+  onStop: (selectedUsers: { nickname: string; alias: string }[]) => void;
+  onReturn: () => void;
 }
 
 const SHAPES = [
@@ -32,7 +33,8 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   users,
   drawQuantity,
   speed = 50,
-  onStop
+  onStop,
+  onReturn
 }) => {
   const [currentIndexes, setCurrentIndexes] = useState<number[]>([]);
   const [isSpinning, setIsSpinning] = useState(true);
@@ -80,7 +82,9 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
       }
     }
     setCurrentIndexes(selectedIndexes);
-    onStop(selectedIndexes);
+    const selectedUsers = selectedIndexes.map(index => users[index]);
+    console.log('selectedUsers', selectedUsers);
+    onStop(selectedUsers);
   };
 
   const getRandomShape = useCallback(() => {
@@ -160,7 +164,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
                     background: gradients[rowIndex * 6 + i],
                     clipPath: shapes[rowIndex * 6 + i],
                     transition: 'transform 0.3s ease',
-                    animation: 'spin 2s linear infinite',
+                    animation: isSpinning ? 'spin 2s linear infinite' : 'none',
                     filter: 'hue-rotate(0deg)',
                     '@keyframes spin': {
                       '0%': { 
@@ -203,22 +207,44 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
           </Box>
         ))}
       </Box>
-      <Button
-        variant="contained"
-        color="primary"
-        size="large"
-        onClick={stopSpinning}
-        disabled={!isSpinning}
-        sx={{ 
-          mt: 4,
-          px: 4,
-          py: 1.5,
-          fontSize: '1.2rem',
-          borderRadius: 2
-        }}
-      >
-        停止抽奖
-      </Button>
+      <Box sx={{ 
+        display: 'flex',
+        gap: 2,
+        mt: 4
+      }}>
+        {isSpinning && (
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            onClick={stopSpinning}
+            sx={{ 
+              px: 4,
+              py: 1.5,
+              fontSize: '1.2rem',
+              borderRadius: 2
+            }}
+          >
+            停止抽奖
+          </Button>
+        )}
+        {!isSpinning && (
+          <Button
+            variant="contained"
+            color="secondary"
+            size="large"
+            onClick={onReturn}
+            sx={{ 
+              px: 4,
+              py: 1.5,
+              fontSize: '1.2rem',
+              borderRadius: 2
+            }}
+          >
+            返回
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 };
