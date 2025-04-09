@@ -59,6 +59,8 @@ const UserManagement: React.FC = () => {
   });
   const [batchActivateDialog, setBatchActivateDialog] = useState(false);
   const [batchDeactivateDialog, setBatchDeactivateDialog] = useState(false);
+  const [activateAllDialog, setActivateAllDialog] = useState(false);
+  const [deactivateAllDialog, setDeactivateAllDialog] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -278,6 +280,28 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleActivateAll = async () => {
+    try {
+      const response = await api.post('/api/users/activate-all');
+      alert(`成功激活 ${response.data.activated} 个用户`);
+      fetchUsers();
+      setActivateAllDialog(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || '全部激活失败');
+    }
+  };
+
+  const handleDeactivateAll = async () => {
+    try {
+      const response = await api.post('/api/users/deactivate-all');
+      alert(`成功取消激活 ${response.data.deactivated} 个用户`);
+      fetchUsers();
+      setDeactivateAllDialog(false);
+    } catch (err: any) {
+      alert(err.response?.data?.message || '全部取消激活失败');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -331,6 +355,20 @@ const UserManagement: React.FC = () => {
             预览导入
           </Button>
         )}
+        <Button
+          variant="contained"
+          color="success"
+          onClick={() => setActivateAllDialog(true)}
+        >
+          全部激活
+        </Button>
+        <Button
+          variant="contained"
+          color="warning"
+          onClick={() => setDeactivateAllDialog(true)}
+        >
+          全部取消激活
+        </Button>
         {selectedUsers.length > 0 && (
           <>
             <Button
@@ -586,6 +624,36 @@ const UserManagement: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setBatchDeactivateDialog(false)}>取消</Button>
           <Button onClick={handleBatchDeactivate} color="warning">
+            确认取消激活
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={activateAllDialog} onClose={() => setActivateAllDialog(false)}>
+        <DialogTitle>确认全部激活</DialogTitle>
+        <DialogContent>
+          <Typography>
+            确定要激活所有未激活的用户吗？
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setActivateAllDialog(false)}>取消</Button>
+          <Button onClick={handleActivateAll} color="success">
+            确认激活
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deactivateAllDialog} onClose={() => setDeactivateAllDialog(false)}>
+        <DialogTitle>确认全部取消激活</DialogTitle>
+        <DialogContent>
+          <Typography>
+            确定要取消激活所有已激活的用户吗？
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeactivateAllDialog(false)}>取消</Button>
+          <Button onClick={handleDeactivateAll} color="warning">
             确认取消激活
           </Button>
         </DialogActions>

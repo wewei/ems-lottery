@@ -533,6 +533,54 @@ router.post('/delete-test-users', authenticateToken as RequestHandler, async (re
   }
 });
 
+
+// 全部激活用户
+router.post('/activate-all', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+  try {
+    const result = await User.updateMany(
+      { isActive: false },
+      {
+        $set: {
+          isActive: true,
+          activatedFrom: {
+            browserId: `admin-${Date.now()}`,
+            activatedAt: new Date()
+          }
+        }
+      }
+    );
+
+    res.json({ 
+      message: '全部激活成功',
+      activated: result.modifiedCount
+    });
+  } catch (err) {
+    res.status(500).json({ message: '全部激活失败' });
+  }
+}) as RequestHandler);
+
+// 全部取消激活用户
+router.post('/deactivate-all', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+  try {
+    const result = await User.updateMany(
+      { isActive: true },
+      {
+        $set: {
+          isActive: false,
+          activatedFrom: undefined
+        }
+      }
+    );
+
+    res.json({ 
+      message: '全部取消激活成功',
+      deactivated: result.modifiedCount
+    });
+  } catch (err) {
+    res.status(500).json({ message: '全部取消激活失败' });
+  }
+}) as RequestHandler);
+
 // 更新用户
 router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
   try {
@@ -565,6 +613,5 @@ router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, r
     res.status(500).json({ message: '服务器错误' });
   }
 }) as RequestHandler);
-
 
 export default router; 
