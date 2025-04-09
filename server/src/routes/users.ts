@@ -555,7 +555,7 @@ router.post('/activate-all', authenticateToken as RequestHandler, (async (req: R
       activated: result.modifiedCount
     });
   } catch (err) {
-    res.status(500).json({ message: '全部激活失败' });
+    res.status(500).json({ message: '全部激活失败', error: err instanceof Error ? err.message : '未知错误' });
   }
 }) as RequestHandler);
 
@@ -577,7 +577,7 @@ router.post('/deactivate-all', authenticateToken as RequestHandler, (async (req:
       deactivated: result.modifiedCount
     });
   } catch (err) {
-    res.status(500).json({ message: '全部取消激活失败' });
+    res.status(500).json({ message: '全部取消激活失败', error: err instanceof Error ? err.message : '未知错误' });
   }
 }) as RequestHandler);
 
@@ -610,7 +610,7 @@ router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, r
 
     res.json(user);
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err instanceof Error ? err.message : '未知错误' });
   }
 }) as RequestHandler);
 

@@ -76,14 +76,13 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     const usedIndexes = new Set();
     while (selectedIndexes.length < drawQuantity) {
       const randomIndex = Math.floor(Math.random() * users.length);
-      if (!usedIndexes.has(randomIndex)) {
+      if (!usedIndexes.has(randomIndex) && randomIndex >= 0 && randomIndex < users.length) {
         usedIndexes.add(randomIndex);
         selectedIndexes.push(randomIndex);
       }
     }
     setCurrentIndexes(selectedIndexes);
     const selectedUsers = selectedIndexes.map(index => users[index]);
-    console.log('selectedUsers', selectedUsers);
     onStop(selectedUsers);
   };
 
