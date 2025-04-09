@@ -110,8 +110,8 @@ router.post('/', (async (req: Request, res: Response) => {
   try {
     const { name, image, totalQuantity, drawQuantity } = req.body;
 
-    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
-      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
+    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 24) {
+      return res.status(400).json({ message: '每轮抽奖数量必须是1-24之间的整数' });
     }
 
     // 从 base64 转换回二进制
@@ -198,8 +198,8 @@ router.post('/:id', (async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, image, totalQuantity, drawQuantity } = req.body;
 
-    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
-      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
+    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 24) {
+      return res.status(400).json({ message: '每轮抽奖数量必须是1-24之间的整数' });
     }
 
     const update: any = { name, totalQuantity, drawQuantity };

@@ -65,27 +65,22 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   }, [drawQuantity, speed, users.length]);
 
   const stopSpinning = () => {
-    // 依次停止每个轮子
-    intervals.forEach((interval, index) => {
-      setTimeout(() => {
-        clearInterval(interval);
-        if (index === intervals.length - 1) {
-          setIsSpinning(false);
-          // 生成不重复的随机索引
-          const selectedIndexes: number[] = [];
-          const usedIndexes = new Set();
-          while (selectedIndexes.length < drawQuantity) {
-            const randomIndex = Math.floor(Math.random() * users.length);
-            if (!usedIndexes.has(randomIndex)) {
-              usedIndexes.add(randomIndex);
-              selectedIndexes.push(randomIndex);
-            }
-          }
-          setCurrentIndexes(selectedIndexes);
-          onStop(selectedIndexes);
-        }
-      }, index * 200); // 每个轮子延迟200ms停止
-    });
+    // 清除所有定时器
+    intervals.forEach(interval => clearInterval(interval));
+    setIsSpinning(false);
+    
+    // 生成不重复的随机索引
+    const selectedIndexes: number[] = [];
+    const usedIndexes = new Set();
+    while (selectedIndexes.length < drawQuantity) {
+      const randomIndex = Math.floor(Math.random() * users.length);
+      if (!usedIndexes.has(randomIndex)) {
+        usedIndexes.add(randomIndex);
+        selectedIndexes.push(randomIndex);
+      }
+    }
+    setCurrentIndexes(selectedIndexes);
+    onStop(selectedIndexes);
   };
 
   const getRandomShape = useCallback(() => {
@@ -120,7 +115,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     }}>
       <Box sx={{ 
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         gap: 3,
         alignItems: 'center',
         justifyContent: 'center',
@@ -128,70 +123,84 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         maxWidth: '1200px',
         px: 2
       }}>
-        {currentIndexes.map((index, i) => (
-          <Card
-            key={i}
+        {Array.from({ length: Math.min(4, Math.ceil(drawQuantity / 6)) }).map((_, rowIndex) => (
+          <Box
+            key={rowIndex}
             sx={{
-              width: 200,
-              height: 280,
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: 'row',
+              gap: 3,
               alignItems: 'center',
-              bgcolor: 'background.paper',
-              transition: 'transform 0.3s ease',
-              '&:hover': {
-                transform: 'translateY(-5px)'
-              }
+              justifyContent: 'center',
+              width: '100%'
             }}
           >
-            <Box
-              sx={{
-                width: 120,
-                height: 120,
-                mt: 3,
-                mb: 2,
-                background: gradients[i],
-                clipPath: shapes[i],
-                transition: 'transform 0.3s ease',
-                animation: 'spin 2s linear infinite',
-                filter: 'hue-rotate(0deg)',
-                '@keyframes spin': {
-                  '0%': { 
-                    transform: 'rotate(0deg)',
-                    filter: 'hue-rotate(0deg)'
-                  },
-                  '50%': {
-                    filter: 'hue-rotate(180deg)'
-                  },
-                  '100%': { 
-                    transform: 'rotate(360deg)',
-                    filter: 'hue-rotate(360deg)'
-                  }
-                }
-              }}
-            />
-            <CardContent sx={{ textAlign: 'center', pt: 0 }}>
-              <Typography
-                variant="h4"
-                component="div"
+            {currentIndexes.slice(rowIndex * 6, Math.min((rowIndex + 1) * 6, drawQuantity)).map((index, i) => (
+              <Card
+                key={i}
                 sx={{
-                  mb: 1,
-                  fontWeight: 'bold',
-                  fontSize: '1.8rem',
-                  lineHeight: 1.2
+                  width: 200,
+                  height: 280,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  bgcolor: 'background.paper',
+                  transition: 'transform 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-5px)'
+                  }
                 }}
               >
-                {users[index]?.nickname || '???'}
-              </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontSize: '0.9rem' }}
-              >
-                {users[index]?.alias || '???'}
-              </Typography>
-            </CardContent>
-          </Card>
+                <Box
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    mt: 3,
+                    mb: 2,
+                    background: gradients[rowIndex * 6 + i],
+                    clipPath: shapes[rowIndex * 6 + i],
+                    transition: 'transform 0.3s ease',
+                    animation: 'spin 2s linear infinite',
+                    filter: 'hue-rotate(0deg)',
+                    '@keyframes spin': {
+                      '0%': { 
+                        transform: 'rotate(0deg)',
+                        filter: 'hue-rotate(0deg)'
+                      },
+                      '50%': {
+                        filter: 'hue-rotate(180deg)'
+                      },
+                      '100%': { 
+                        transform: 'rotate(360deg)',
+                        filter: 'hue-rotate(360deg)'
+                      }
+                    }
+                  }}
+                />
+                <CardContent sx={{ textAlign: 'center', pt: 0 }}>
+                  <Typography
+                    variant="h4"
+                    component="div"
+                    sx={{
+                      mb: 1,
+                      fontWeight: 'bold',
+                      fontSize: '1.8rem',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {users[index]?.nickname || '???'}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: '0.9rem' }}
+                  >
+                    {users[index]?.alias || '???'}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
         ))}
       </Box>
       <Button

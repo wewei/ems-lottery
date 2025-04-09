@@ -257,10 +257,10 @@ const PrizeManagement: React.FC = () => {
               value={newPrize.drawQuantity}
               onChange={(e) => setNewPrize(prev => ({ 
                 ...prev, 
-                drawQuantity: Math.min(5, Math.max(1, parseInt(e.target.value)))
+                drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
               }))}
-              inputProps={{ min: 1, max: 5 }}
-              helperText="每轮抽奖数量范围：1-5"
+              inputProps={{ min: 1, max: 20 }}
+              helperText="每轮抽奖数量范围：1-20"
               fullWidth
             />
             <Button
@@ -337,10 +337,10 @@ const PrizeManagement: React.FC = () => {
               value={editingPrize?.drawQuantity || 1}
               onChange={(e) => setEditingPrize(prev => prev ? {
                 ...prev,
-                drawQuantity: Math.min(5, Math.max(1, parseInt(e.target.value)))
+                drawQuantity: Math.min(24, Math.max(1, parseInt(e.target.value)))
               } : null)}
-              inputProps={{ min: 1, max: 5 }}
-              helperText="每轮抽奖数量范围：1-5"
+              inputProps={{ min: 1, max: 24 }}
+              helperText="每轮抽奖数量范围：1-24"
               fullWidth
             />
             <Button
