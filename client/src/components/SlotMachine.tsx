@@ -128,7 +128,6 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   );
 
   const rowSize = getRowSize(drawQuantity);
-  console.log("rowSize", rowSize);
 
   return (
     <Box sx={{ 
