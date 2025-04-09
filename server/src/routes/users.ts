@@ -82,38 +82,6 @@ router.get('/', authenticateToken as RequestHandler, (async (req: Request, res: 
   }
 }) as RequestHandler);
 
-// 更新用户
-router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const update = req.body;
-
-    // 如果要更新别名，检查是否已存在
-    if (update.alias) {
-      const existingUser = await User.findOne({ 
-        alias: update.alias,
-        _id: { $ne: id }
-      });
-      if (existingUser) {
-        return res.status(400).json({ message: '该别名已被使用' });
-      }
-    }
-
-    const user = await User.findByIdAndUpdate(
-      id,
-      update,
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ message: '用户不存在' });
-    }
-
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
-  }
-}) as RequestHandler);
 
 // 删除用户
 router.delete('/:id', (async (req: Request, res: Response) => {
@@ -565,6 +533,38 @@ router.post('/delete-test-users', authenticateToken as RequestHandler, async (re
   }
 });
 
-// ... 其他路由
+// 更新用户
+router.post('/:id', authenticateToken as RequestHandler, (async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const update = req.body;
+
+    // 如果要更新别名，检查是否已存在
+    if (update.alias) {
+      const existingUser = await User.findOne({ 
+        alias: update.alias,
+        _id: { $ne: id }
+      });
+      if (existingUser) {
+        return res.status(400).json({ message: '该别名已被使用' });
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      update,
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: '用户不存在' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
 
 export default router; 

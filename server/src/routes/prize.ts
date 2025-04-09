@@ -146,40 +146,6 @@ router.post('/', (async (req: Request, res: Response) => {
   }
 }) as RequestHandler);
 
-// 更新奖项
-router.post('/:id', (async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { name, image, totalQuantity, drawQuantity } = req.body;
-
-    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
-      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
-    }
-
-    const update: any = { name, totalQuantity, drawQuantity };
-
-    // 如果更新了图片
-    if (image && image !== (await Prize.findById(id))?.image?.data) {
-      const matches = image.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-      if (matches && matches.length === 3) {
-        update.image = {
-          data: Buffer.from(matches[2], 'base64'),
-          contentType: matches[1]
-        };
-      }
-    }
-
-    const prize = await Prize.findByIdAndUpdate(id, update, { new: true });
-    if (!prize) {
-      return res.status(404).json({ message: '奖项不存在' });
-    }
-
-    res.json(prize);
-  } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
-  }
-}) as RequestHandler);
-
 // 删除奖项
 router.delete('/:id', (async (req: Request, res: Response) => {
   try {
@@ -221,6 +187,40 @@ router.get('/:id', (async (req: Request, res: Response) => {
       image: prize.image ? `data:${prize.image.contentType};base64,${prize.image.data.toString('base64')}` : null
     };
     res.json({ prize: processedPrize });
+  } catch (err) {
+    res.status(500).json({ message: '服务器错误' });
+  }
+}) as RequestHandler);
+
+// 更新奖项
+router.post('/:id', (async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, image, totalQuantity, drawQuantity } = req.body;
+
+    if (!Number.isInteger(drawQuantity) || drawQuantity < 1 || drawQuantity > 5) {
+      return res.status(400).json({ message: '每轮抽奖数量必须是1-5之间的整数' });
+    }
+
+    const update: any = { name, totalQuantity, drawQuantity };
+
+    // 如果更新了图片
+    if (image && image !== (await Prize.findById(id))?.image?.data) {
+      const matches = image.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        update.image = {
+          data: Buffer.from(matches[2], 'base64'),
+          contentType: matches[1]
+        };
+      }
+    }
+
+    const prize = await Prize.findByIdAndUpdate(id, update, { new: true });
+    if (!prize) {
+      return res.status(404).json({ message: '奖项不存在' });
+    }
+
+    res.json(prize);
   } catch (err) {
     res.status(500).json({ message: '服务器错误' });
   }
