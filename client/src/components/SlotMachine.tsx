@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Card, CardContent } from '@mui/material';
 
 interface SlotMachineProps {
@@ -20,6 +20,22 @@ const SHAPES = [
   'polygon(0% 0%, 100% 0%, 100% 100%)', // 三角形
 ];
 
+const MAX_ROWS = 4;
+
+function getRowSize(drawQuantity: number) {
+  let rowSize = 6;
+  let remaining = (6 - drawQuantity % 6) % 6;
+  [4, 5].forEach(s => {
+    if (s * MAX_ROWS < drawQuantity) return;
+    const r = (s - drawQuantity % s) % s;
+    if (r < remaining) {
+      remaining = r;
+      rowSize = s;
+    }
+  })
+  return rowSize;
+}
+
 const GRADIENTS = [
   'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)',
   'linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%)',
@@ -37,8 +53,11 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   onReturn
 }) => {
   const [currentIndexes, setCurrentIndexes] = useState<number[]>([]);
+  const [winners, setWinners] = useState<{ nickname: string; alias: string }[] | null>(null);
+  const selectedUsers = winners || currentIndexes.map(index => users[index]);
   const [isSpinning, setIsSpinning] = useState(true);
   const [intervals, setIntervals] = useState<ReturnType<typeof setInterval>[]>([]);
+  const isStopped = useRef(false);
 
   // 初始化多个老虎机轮子
   useEffect(() => {
@@ -54,11 +73,14 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     // 为每个轮子创建一个定时器
     const newIntervals = Array(drawQuantity).fill(0).map((_, slotIndex) => {
       return setInterval(() => {
-        setCurrentIndexes(prev => {
-          const next = [...prev];
-          next[slotIndex] = (next[slotIndex] + 1) % users.length;
-          return next;
-        });
+        if (!isStopped.current) {
+          setCurrentIndexes(prev => {
+            if (isStopped.current) return prev;
+            const next = [...prev];
+            next[slotIndex] = (next[slotIndex] + 1) % users.length;
+            return next;
+          });
+        }
       }, speed + slotIndex * 10); // 每个轮子速度略有不同
     });
 
@@ -69,6 +91,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   const stopSpinning = () => {
     // 清除所有定时器
     intervals.forEach(interval => clearInterval(interval));
+    isStopped.current = true;
     setIsSpinning(false);
     
     // 生成不重复的随机索引
@@ -83,6 +106,8 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     }
     setCurrentIndexes(selectedIndexes);
     const selectedUsers = selectedIndexes.map(index => users[index]);
+    setWinners(selectedUsers);
+    console.log("selectedUsers", selectedUsers);
     onStop(selectedUsers);
   };
 
@@ -101,6 +126,9 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   const [gradients] = useState(() =>
     Array(drawQuantity).fill(0).map(() => getRandomGradient())
   );
+
+  const rowSize = getRowSize(drawQuantity);
+  console.log("rowSize", rowSize);
 
   return (
     <Box sx={{ 
@@ -126,7 +154,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         maxWidth: '1200px',
         px: 2
       }}>
-        {Array.from({ length: Math.min(4, Math.ceil(drawQuantity / 6)) }).map((_, rowIndex) => (
+        {Array.from({ length: Math.min(4, Math.ceil(drawQuantity / rowSize)) }).map((_, rowIndex) => (
           <Box
             key={rowIndex}
             sx={{
@@ -138,7 +166,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
               width: '100%'
             }}
           >
-            {currentIndexes.slice(rowIndex * 6, Math.min((rowIndex + 1) * 6, drawQuantity)).map((index, i) => (
+            {selectedUsers.slice(rowIndex * rowSize, Math.min((rowIndex + 1) * rowSize, drawQuantity)).map((user, i) => (
               <Card
                 key={i}
                 sx={{
@@ -160,8 +188,8 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
                     height: 120,
                     mt: 3,
                     mb: 2,
-                    background: gradients[rowIndex * 6 + i],
-                    clipPath: shapes[rowIndex * 6 + i],
+                    background: gradients[rowIndex * rowSize + i],
+                    clipPath: shapes[rowIndex * rowSize + i],
                     transition: 'transform 0.3s ease',
                     animation: isSpinning ? 'spin 2s linear infinite' : 'none',
                     filter: 'hue-rotate(0deg)',
@@ -191,14 +219,14 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
                       lineHeight: 1.2
                     }}
                   >
-                    {users[index]?.nickname || '???'}
+                    {user?.nickname || '???'}
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ fontSize: '0.9rem' }}
                   >
-                    {users[index]?.alias || '???'}
+                    {user?.alias || '???'}
                   </Typography>
                 </CardContent>
               </Card>
