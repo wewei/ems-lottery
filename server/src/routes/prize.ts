@@ -47,7 +47,7 @@ router.get('/', (async (req: Request, res: Response) => {
     
     const [prizes, total] = await Promise.all([
       Prize.find()
-        .sort({ createdAt: -1 })
+        .sort({ _id: -1 })
         .skip(skip)
         .limit(limit)
         .lean()
@@ -71,7 +71,7 @@ router.get('/', (async (req: Request, res: Response) => {
       pages: Math.ceil(total / limit)
     });
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err });
   }
 }) as RequestHandler);
 
@@ -101,7 +101,7 @@ router.post('/upload', upload.single('image'), (async (req: Request, res: Respon
       }
     });
   } catch (err) {
-    res.status(500).json({ message: '上传失败' });
+    res.status(500).json({ message: '上传失败', error: err });
   }
 }) as RequestHandler);
 
@@ -142,7 +142,7 @@ router.post('/', (async (req: Request, res: Response) => {
     await prize.save();
     res.status(201).json(prize);
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err });
   }
 }) as RequestHandler);
 
@@ -158,7 +158,7 @@ router.delete('/:id', (async (req: Request, res: Response) => {
 
     res.json({ message: '奖项已删除' });
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err });
   }
 }) as RequestHandler);
 
@@ -188,7 +188,7 @@ router.get('/:id', (async (req: Request, res: Response) => {
     };
     res.json({ prize: processedPrize });
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err });
   }
 }) as RequestHandler);
 
@@ -222,7 +222,7 @@ router.post('/:id', (async (req: Request, res: Response) => {
 
     res.json(prize);
   } catch (err) {
-    res.status(500).json({ message: '服务器错误' });
+    res.status(500).json({ message: '服务器错误', error: err });
   }
 }) as RequestHandler);
 
