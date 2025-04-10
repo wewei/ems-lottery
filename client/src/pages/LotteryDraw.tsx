@@ -138,55 +138,87 @@ const LotteryDraw: React.FC = () => {
   return (
     <>
       <Header title={prize?.name || t('lottery.title')} />
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: `url(${prize.image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          zIndex: -1,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 1
+          }
+        }}
+      />
       <Container>
-        <Box sx={{ mt: 2, mb: -2 }}>
+        <Box sx={{ mt: 2, mb: -2, position: 'relative', zIndex: 2 }}>
           <IconButton 
             onClick={() => navigate('/lottery')}
             title={t('common.back')}
+            sx={{ color: 'white' }}
           >
             <ArrowBackIcon />
           </IconButton>
         </Box>
-        <Box sx={{ mt: 4, textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom>
+        <Box 
+          sx={{ 
+            mt: 4, 
+            textAlign: 'center',
+            position: 'relative',
+            zIndex: 2,
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}
+        >
+          <Typography 
+            variant="h2" 
+            gutterBottom
+            sx={{ 
+              color: 'white',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              mb: 4
+            }}
+          >
             {prize.name}
           </Typography>
-          <Box sx={{ my: 3 }}>
-            <img
-              src={prize.image}
-              alt={prize.name}
-              style={{ 
-                maxWidth: '100%',
-                height: 'auto',
-                maxHeight: '300px',
-                objectFit: 'contain'
-              }}
-            />
-          </Box>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              {t('lottery.remaining')}: {prize.remaining}
-            </Typography>
-            <Typography variant="h6" gutterBottom>
-              {t('lottery.drawQuantity')}: {Math.min(prize.drawQuantity, prize.remaining)} {t('common.people')}
-            </Typography>
-            <Typography variant="h6" gutterBottom color="text.secondary">
-              {t('lottery.activeUsers')}: {activeUsers.length} {t('common.people')}
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleDraw}
-              disabled={
-                isDrawing || 
-                prize.remaining <= 0 || 
-                stats.activeUserCount < Math.min(prize.drawQuantity, prize.remaining)
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleDraw}
+            disabled={
+              isDrawing || 
+              prize.remaining <= 0 || 
+              stats.activeUserCount < Math.min(prize.drawQuantity, prize.remaining)
+            }
+            sx={{ 
+              py: 3,
+              px: 6,
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                transition: 'transform 0.2s'
               }
-              sx={{ mt: 2 }}
-            >
-              {getButtonText()}
-            </Button>
-          </Paper>
+            }}
+          >
+            {getButtonText()}
+          </Button>
 
           {isSlotMachineVisible && (
             <SlotMachine
