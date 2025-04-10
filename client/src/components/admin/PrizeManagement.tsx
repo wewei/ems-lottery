@@ -33,6 +33,13 @@ interface Prize {
   remaining: number;
 }
 
+interface NewPrize {
+  name: string;
+  image: string;
+  totalQuantity: number;
+  drawQuantity: number;
+}
+
 const PrizeManagement: React.FC = () => {
   const { t } = useTranslation();
   const [prizes, setPrizes] = useState<Prize[]>([]);
@@ -44,12 +51,7 @@ const PrizeManagement: React.FC = () => {
   const [editDialog, setEditDialog] = useState(false);
   const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
   const [editingPrize, setEditingPrize] = useState<Prize | null>(null);
-  const [newPrize, setNewPrize] = useState({
-    name: '',
-    image: '',
-    totalQuantity: 0,
-    drawQuantity: 1
-  });
+  const [newPrize, setNewPrize] = useState<NewPrize | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const fetchPrizes = async () => {
@@ -88,7 +90,8 @@ const PrizeManagement: React.FC = () => {
 
       try {
         const response = await api.post('/api/prizes/upload', formData);
-        setNewPrize(prev => ({ ...prev, image: response.data.url }));
+        setNewPrize(prev => (prev ? { ...prev, image: response.data.url } : null));
+        setEditingPrize(prev => (prev ? { ...prev, image: response.data.url } : null));
         setImagePreview(response.data.url);
       } catch (err) {
         alert('上传图片失败');
@@ -100,12 +103,7 @@ const PrizeManagement: React.FC = () => {
     try {
       await api.post('/api/prizes', newPrize);
       setCreateDialog(false);
-      setNewPrize({
-        name: '',
-        image: '',
-        totalQuantity: 0,
-        drawQuantity: 1
-      });
+      setNewPrize(null);
       setImagePreview(null);
       fetchPrizes();
     } catch (err) {
@@ -144,7 +142,16 @@ const PrizeManagement: React.FC = () => {
       <Box sx={{ mb: 2 }}>
         <Button
           variant="contained"
-          onClick={() => setCreateDialog(true)}
+          onClick={() => {
+            setCreateDialog(true);
+            setNewPrize({
+              name: '',
+              image: '',
+              totalQuantity: 0,
+              drawQuantity: 1
+            });
+            setImagePreview(null);
+          }}
         >
           {t('lottery.addPrize')}
         </Button>
@@ -238,26 +245,26 @@ const PrizeManagement: React.FC = () => {
             )}
             <TextField
               label={t('lottery.prizeName')}
-              value={newPrize.name}
-              onChange={(e) => setNewPrize(prev => ({ ...prev, name: e.target.value }))}
+              value={newPrize?.name || ''}
+              onChange={(e) => setNewPrize(prev => (prev ? { ...prev, name: e.target.value } : null))}
               fullWidth
             />
             <TextField
               fullWidth
               type="number"
               label={t('lottery.totalQuantity')}
-              value={newPrize.totalQuantity}
-              onChange={(e) => setNewPrize(prev => ({ ...prev, totalQuantity: parseInt(e.target.value) }))}
+              value={newPrize?.totalQuantity || 0}
+              onChange={(e) => setNewPrize(prev => (prev ? { ...prev, totalQuantity: parseInt(e.target.value) } : null))}
               sx={{ mb: 2 }}
             />
             <TextField
               type="number"
               label={t('lottery.drawQuantity')}
-              value={newPrize.drawQuantity}
-              onChange={(e) => setNewPrize(prev => ({ 
-                ...prev, 
+              value={newPrize?.drawQuantity || 1}
+              onChange={(e) => setNewPrize(prev => (prev ? {
+                ...prev,
                 drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
-              }))}
+              } : null))}
               inputProps={{ min: 1, max: 20 }}
               helperText={t('lottery.drawQuantity') + ': 1-20'}
               fullWidth
