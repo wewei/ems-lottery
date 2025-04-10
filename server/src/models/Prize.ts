@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { MAX_DRAW_QUANTITY } from '../utils/constants';
 
 export interface IPrize extends Document {
   name: string;        // 奖项名称
@@ -44,7 +45,7 @@ const PrizeSchema: Schema = new Schema({
     type: Number, 
     required: true,
     min: 1,
-    max: 24,
+    max: MAX_DRAW_QUANTITY,
     validate: {
       validator: Number.isInteger,
       message: '每轮抽奖数必须是整数'

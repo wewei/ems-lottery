@@ -1,0 +1,1 @@
+export const MAX_DRAW_QUANTITY = 32;

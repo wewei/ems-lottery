@@ -23,6 +23,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import EditIcon from '@mui/icons-material/Edit';
 import { useTranslation } from 'react-i18next';
 import api from '../../utils/axios';
+import { MAX_DRAW_QUANTITY } from '../../constants';
 
 interface Prize {
   _id: string;
@@ -263,10 +264,10 @@ const PrizeManagement: React.FC = () => {
               value={newPrize?.drawQuantity || 1}
               onChange={(e) => setNewPrize(prev => (prev ? {
                 ...prev,
-                drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
+                drawQuantity: Math.min(MAX_DRAW_QUANTITY, Math.max(1, parseInt(e.target.value)))
               } : null))}
-              inputProps={{ min: 1, max: 20 }}
-              helperText={t('lottery.drawQuantity') + ': 1-20'}
+              inputProps={{ min: 1, max: MAX_DRAW_QUANTITY }}
+              helperText={t('lottery.drawQuantity') + ': 1-' + MAX_DRAW_QUANTITY}
               fullWidth
             />
             <Button
@@ -330,10 +331,10 @@ const PrizeManagement: React.FC = () => {
               value={editingPrize?.drawQuantity || 1}
               onChange={(e) => setEditingPrize(prev => prev ? {
                 ...prev,
-                drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
+                drawQuantity: Math.min(MAX_DRAW_QUANTITY, Math.max(1, parseInt(e.target.value)))
               } : null)}
-              inputProps={{ min: 1, max: 20 }}
-              helperText={t('lottery.drawQuantity') + ': 1-20'}
+              inputProps={{ min: 1, max: MAX_DRAW_QUANTITY }}
+              helperText={t('lottery.drawQuantity') + ': 1-' + MAX_DRAW_QUANTITY}
               fullWidth
             />
             <Button

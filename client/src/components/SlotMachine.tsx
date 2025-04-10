@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useReducer, useMemo } from 'react';
 import { Box, Typography, Button, Card, CardContent } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { DEFAULT_COLUMNS, MAX_COLUMNS, MIN_COLUMNS, MAX_DRAW_QUANTITY } from '../constants';
 
 interface SlotMachineProps {
   users: Array<{
@@ -24,16 +25,16 @@ const SHAPES = [
 const MAX_ROWS = 4;
 
 function getRowSize(drawQuantity: number) {
-  let rowSize = 6;
-  let remaining = (6 - drawQuantity % 6) % 6;
-  [4, 5].forEach(s => {
-    if (s * MAX_ROWS < drawQuantity) return;
+  let rowSize = DEFAULT_COLUMNS;
+  let remaining = (DEFAULT_COLUMNS - drawQuantity % DEFAULT_COLUMNS) % DEFAULT_COLUMNS;
+  for (let s = MIN_COLUMNS; s <= MAX_COLUMNS; s++) {
+    if (s * MAX_ROWS < drawQuantity) continue;
     const r = (s - drawQuantity % s) % s;
     if (r < remaining) {
       remaining = r;
       rowSize = s;
     }
-  })
+  }
   return rowSize;
 }
 
@@ -46,6 +47,86 @@ const GRADIENTS = [
   'linear-gradient(to right, #eea2a2 0%, #bbc1bf 19%, #57c6e1 42%, #b49fda 79%, #7ac5d8 100%)'
 ];
 
+type SlotMachineState = {
+  isSpinning: true;
+  currentIndexes: number[];
+  users: { nickname: string; alias: string }[];
+} | {
+  isSpinning: false;
+  winners: { nickname: string; alias: string }[];
+}
+
+type SlotMachienActions = {
+  type: 'start';
+  drawQuantity: number;
+  users: { nickname: string; alias: string }[];
+}
+| {
+  type: 'next'
+} | {
+  type: 'stop';
+}
+
+const pickRandomNumbers = (quality: number, total: number) => {
+  if (quality > total) {
+    throw new Error("quality is greater than total");
+  }
+  const allNumbers = Array.from({ length: total }, (_, i) => i);
+  const result: number[] = [];
+  while (result.length < quality) {
+    const randomIndex = Math.floor(Math.random() * allNumbers.length);
+    result.push(allNumbers[randomIndex]);
+    allNumbers.splice(randomIndex, 1);
+  }
+  return result;
+}
+
+const generateRandomIndexes = (quality: number, total: number) => {
+  if (quality > total) {
+    throw new Error("quality is greater than total");
+  }
+  const result: number[] = [];
+  while (result.length < quality) {
+    const randomIndex = Math.floor(Math.random() * total);
+    if (!result.includes(randomIndex)) {
+      result.push(randomIndex);
+    }
+  }
+  return result;
+}
+
+const getRandomIndexes = (quality: number, total: number) => {
+  if (quality > total) {
+    throw new Error("quality is greater than total");
+  }
+  return total > quality * 3 ? generateRandomIndexes(quality, total) : pickRandomNumbers(quality, total);
+}
+
+const slotMachineReducer = (state: SlotMachineState, action: SlotMachienActions): SlotMachineState => {
+  switch (action.type) {
+    case 'start':
+      return {
+        isSpinning: true,
+        currentIndexes: getRandomIndexes(action.drawQuantity, action.users.length),
+        users: action.users,
+      };
+    case 'next':
+      return state.isSpinning
+        ? {
+            ...state,
+            currentIndexes: getRandomIndexes(state.currentIndexes.length, state.users.length),
+          }
+        : state;
+    case 'stop':
+      return state.isSpinning
+        ? {
+            isSpinning: false,
+            winners: state.currentIndexes.map((index) => state.users[index]),
+          }
+        : state;
+  }
+}
+
 const SlotMachine: React.FC<SlotMachineProps> = ({
   users,
   drawQuantity,
@@ -54,64 +135,24 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   onReturn
 }) => {
   const { t } = useTranslation();
-  const [currentIndexes, setCurrentIndexes] = useState<number[]>([]);
-  const [winners, setWinners] = useState<{ nickname: string; alias: string }[] | null>(null);
-  const selectedUsers = winners || currentIndexes.map(index => users[index]);
-  const [isSpinning, setIsSpinning] = useState(true);
-  const [intervals, setIntervals] = useState<ReturnType<typeof setInterval>[]>([]);
-  const isStopped = useRef(false);
-
-  // 初始化多个老虎机轮子
+  const [state, dispatch] = useReducer(slotMachineReducer, {
+    users,
+    isSpinning: true,
+    currentIndexes: getRandomIndexes(drawQuantity, users.length),
+  });
   useEffect(() => {
-    const newIndexes = Array(drawQuantity).fill(0);
-    setCurrentIndexes(newIndexes);
-    startSpinning();
-  }, [drawQuantity]);
-
-  const startSpinning = useCallback(() => {
-    // 清除现有的定时器
-    intervals.forEach(interval => clearInterval(interval));
-    
-    // 为每个轮子创建一个定时器
-    const newIntervals = Array(drawQuantity).fill(0).map((_, slotIndex) => {
-      return setInterval(() => {
-        if (!isStopped.current) {
-          setCurrentIndexes(prev => {
-            if (isStopped.current) return prev;
-            const next = [...prev];
-            next[slotIndex] = (next[slotIndex] + 1) % users.length;
-            return next;
-          });
-        }
-      }, speed + slotIndex * 10); // 每个轮子速度略有不同
-    });
-
-    setIntervals(newIntervals);
-    setIsSpinning(true);
-  }, [drawQuantity, speed, users.length]);
-
-  const stopSpinning = () => {
-    // 清除所有定时器
-    intervals.forEach(interval => clearInterval(interval));
-    isStopped.current = true;
-    setIsSpinning(false);
-    
-    // 生成不重复的随机索引
-    const selectedIndexes: number[] = [];
-    const usedIndexes = new Set();
-    while (selectedIndexes.length < drawQuantity) {
-      const randomIndex = Math.floor(Math.random() * users.length);
-      if (!usedIndexes.has(randomIndex) && randomIndex >= 0 && randomIndex < users.length) {
-        usedIndexes.add(randomIndex);
-        selectedIndexes.push(randomIndex);
+    const interval = state.isSpinning ? setInterval(() => {
+      dispatch({ type: 'next' });
+    }, speed) : null;
+    if (!state.isSpinning) {
+      onStop(state.winners);
+    }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
       }
     }
-    setCurrentIndexes(selectedIndexes);
-    const selectedUsers = selectedIndexes.map(index => users[index]);
-    setWinners(selectedUsers);
-    console.log("selectedUsers", selectedUsers);
-    onStop(selectedUsers);
-  };
+  }, [state.isSpinning]);
 
   const getRandomShape = useCallback(() => {
     return SHAPES[Math.floor(Math.random() * SHAPES.length)];
@@ -121,15 +162,23 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
     return GRADIENTS[Math.floor(Math.random() * GRADIENTS.length)];
   }, []);
 
-  const [shapes] = useState(() => 
-    Array(drawQuantity).fill(0).map(() => getRandomShape())
-  );
+  const shapes = useMemo(() => 
+    Array(MAX_DRAW_QUANTITY).fill(0).map(() => getRandomShape())
+  , []);
 
-  const [gradients] = useState(() =>
-    Array(drawQuantity).fill(0).map(() => getRandomGradient())
-  );
+  const gradients = useMemo(() =>
+    Array(MAX_DRAW_QUANTITY).fill(0).map(() => getRandomGradient())
+  , []);
 
-  const rowSize = getRowSize(drawQuantity);
+  const selectedUsers = useMemo(
+    () =>
+      state.isSpinning
+        ? state.currentIndexes.map((index) => state.users[index])
+        : state.winners,
+    [state]
+  );
+  const quality = useMemo(() => selectedUsers.length, [selectedUsers]);
+  const rowSize = useMemo(() => getRowSize(quality), [quality]);
 
   return (
     <Box sx={{ 
@@ -155,7 +204,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         maxWidth: '1200px',
         px: 2
       }}>
-        {Array.from({ length: Math.min(4, Math.ceil(drawQuantity / rowSize)) }).map((_, rowIndex) => (
+        {Array.from({ length: Math.min(4, Math.ceil(quality / rowSize)) }).map((_, rowIndex) => (
           <Box
             key={rowIndex}
             sx={{
@@ -167,7 +216,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
               width: '100%'
             }}
           >
-            {selectedUsers.slice(rowIndex * rowSize, Math.min((rowIndex + 1) * rowSize, drawQuantity)).map((user, i) => (
+            {selectedUsers.slice(rowIndex * rowSize, Math.min((rowIndex + 1) * rowSize, quality)).map((user, i) => (
               <Card
                 key={i}
                 sx={{
@@ -192,7 +241,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
                     background: gradients[rowIndex * rowSize + i],
                     clipPath: shapes[rowIndex * rowSize + i],
                     transition: 'transform 0.3s ease',
-                    animation: isSpinning ? 'spin 2s linear infinite' : 'none',
+                    animation: state.isSpinning ? 'spin 2s linear infinite' : 'none',
                     filter: 'hue-rotate(0deg)',
                     '@keyframes spin': {
                       '0%': { 
@@ -240,12 +289,12 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
         gap: 2,
         mt: 4
       }}>
-        {isSpinning && (
+        {state.isSpinning ? (
           <Button
             variant="contained"
             color="primary"
             size="large"
-            onClick={stopSpinning}
+            onClick={() => dispatch({ type: 'stop' })}
             sx={{ 
               px: 4,
               py: 1.5,
@@ -255,19 +304,30 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
           >
             {t('lottery.stop')}
           </Button>
-        )}
-        {!isSpinning && (
+        ) : drawQuantity > 0 ? (
           <Button
             variant="contained"
             color="secondary"
             size="large"
-            onClick={onReturn}
+            onClick={() => {
+              dispatch({ type: 'start', drawQuantity, users });
+              console.log("start with users", users);
+            }}
             sx={{ 
               px: 4,
               py: 1.5,
               fontSize: '1.2rem',
               borderRadius: 2
             }}
+          >
+            {t('lottery.start')}
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            color="secondary"
+            size="large"
+            onClick={onReturn}
           >
             {t('common.return')}
           </Button>
