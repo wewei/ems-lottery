@@ -18,6 +18,7 @@ import {
   Typography
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useTranslation } from 'react-i18next';
 import api from '../../utils/axios';
 
 interface DrawRecord {
@@ -33,6 +34,7 @@ interface DrawRecord {
 }
 
 const DrawRecordManagement: React.FC = () => {
+  const { t } = useTranslation();
   const [records, setRecords] = useState<DrawRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -51,7 +53,7 @@ const DrawRecordManagement: React.FC = () => {
       setRecords(response.data.records);
       setTotal(response.data.total);
     } catch (err) {
-      console.error('获取抽奖记录失败', err);
+      console.error(t('drawRecord.fetchFailed'), err);
     }
   };
 
@@ -77,7 +79,7 @@ const DrawRecordManagement: React.FC = () => {
       setSelectedRecord(null);
       fetchRecords();
     } catch (err) {
-      alert('删除记录失败');
+      alert(t('drawRecord.deleteFailed'));
     }
   };
 
@@ -98,10 +100,10 @@ const DrawRecordManagement: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>抽奖时间</TableCell>
-              <TableCell>奖项</TableCell>
-              <TableCell>中奖者</TableCell>
-              <TableCell>操作</TableCell>
+              <TableCell>{t('drawRecord.drawTime')}</TableCell>
+              <TableCell>{t('drawRecord.prize')}</TableCell>
+              <TableCell>{t('drawRecord.winners')}</TableCell>
+              <TableCell>{t('common.operation')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -142,21 +144,21 @@ const DrawRecordManagement: React.FC = () => {
       />
 
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{t('drawRecord.confirmDelete')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要删除这条抽奖记录吗？
+            {t('drawRecord.confirmDeleteMessage')}
           </Typography>
           {selectedRecord && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                时间：{formatDate(selectedRecord.drawTime)}
+                {t('drawRecord.drawTime')}: {formatDate(selectedRecord.drawTime)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                奖项：{selectedRecord.prizeName}
+                {t('drawRecord.prize')}: {selectedRecord.prizeName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                中奖者：{selectedRecord.winners.map(w => 
+                {t('drawRecord.winners')}: {selectedRecord.winners.map(w => 
                   `${w.nickname}(${w.alias})`
                 ).join(', ')}
               </Typography>
@@ -164,9 +166,9 @@ const DrawRecordManagement: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog(false)}>取消</Button>
+          <Button onClick={() => setDeleteDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleDelete} color="error">
-            确认删除
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>

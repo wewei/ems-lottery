@@ -21,6 +21,7 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import ImageIcon from '@mui/icons-material/Image';
 import EditIcon from '@mui/icons-material/Edit';
+import { useTranslation } from 'react-i18next';
 import api from '../../utils/axios';
 
 interface Prize {
@@ -33,6 +34,7 @@ interface Prize {
 }
 
 const PrizeManagement: React.FC = () => {
+  const { t } = useTranslation();
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -144,7 +146,7 @@ const PrizeManagement: React.FC = () => {
           variant="contained"
           onClick={() => setCreateDialog(true)}
         >
-          新增奖项
+          {t('lottery.addPrize')}
         </Button>
       </Box>
 
@@ -152,12 +154,12 @@ const PrizeManagement: React.FC = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>名称</TableCell>
-              <TableCell>图片</TableCell>
-              <TableCell>总数量</TableCell>
-              <TableCell>每次抽取数量</TableCell>
-              <TableCell>剩余数量</TableCell>
-              <TableCell align="center">操作</TableCell>
+              <TableCell>{t('lottery.prizeName')}</TableCell>
+              <TableCell>{t('lottery.prizeImage')}</TableCell>
+              <TableCell>{t('lottery.totalQuantity')}</TableCell>
+              <TableCell>{t('lottery.drawQuantity')}</TableCell>
+              <TableCell>{t('lottery.remaining')}</TableCell>
+              <TableCell align="center">{t('common.edit')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -181,15 +183,13 @@ const PrizeManagement: React.FC = () => {
                 <TableCell>{prize.totalQuantity}</TableCell>
                 <TableCell>{prize.drawQuantity}</TableCell>
                 <TableCell>{prize.remaining}</TableCell>
-                <TableCell align="center">
+                <TableCell>
                   <IconButton
                     color="primary"
                     onClick={() => {
                       setEditingPrize(prize);
-                      setImagePreview(prize.image);
                       setEditDialog(true);
                     }}
-                    title="编辑"
                   >
                     <EditIcon />
                   </IconButton>
@@ -199,7 +199,6 @@ const PrizeManagement: React.FC = () => {
                       setSelectedPrize(prize);
                       setDeleteDialog(true);
                     }}
-                    title="删除"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -221,14 +220,14 @@ const PrizeManagement: React.FC = () => {
       />
 
       <Dialog open={createDialog} onClose={() => setCreateDialog(false)}>
-        <DialogTitle>新增奖项</DialogTitle>
+        <DialogTitle>{t('lottery.addPrize')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {imagePreview && (
               <Box sx={{ textAlign: 'center', mb: 2 }}>
                 <img
                   src={imagePreview}
-                  alt="预览"
+                  alt="Preview"
                   style={{
                     maxWidth: '200px',
                     maxHeight: '200px',
@@ -238,7 +237,7 @@ const PrizeManagement: React.FC = () => {
               </Box>
             )}
             <TextField
-              label="名称"
+              label={t('lottery.prizeName')}
               value={newPrize.name}
               onChange={(e) => setNewPrize(prev => ({ ...prev, name: e.target.value }))}
               fullWidth
@@ -246,21 +245,21 @@ const PrizeManagement: React.FC = () => {
             <TextField
               fullWidth
               type="number"
-              label="总数量"
+              label={t('lottery.totalQuantity')}
               value={newPrize.totalQuantity}
               onChange={(e) => setNewPrize(prev => ({ ...prev, totalQuantity: parseInt(e.target.value) }))}
               sx={{ mb: 2 }}
             />
             <TextField
               type="number"
-              label="抽取数量"
+              label={t('lottery.drawQuantity')}
               value={newPrize.drawQuantity}
               onChange={(e) => setNewPrize(prev => ({ 
                 ...prev, 
                 drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
               }))}
               inputProps={{ min: 1, max: 20 }}
-              helperText="每轮抽奖数量范围：1-20"
+              helperText={t('lottery.drawQuantity') + ': 1-20'}
               fullWidth
             />
             <Button
@@ -268,7 +267,7 @@ const PrizeManagement: React.FC = () => {
               component="label"
               startIcon={<ImageIcon />}
             >
-              上传图片
+              {t('common.upload')}
               <input
                 type="file"
                 hidden
@@ -279,37 +278,24 @@ const PrizeManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialog(false)}>取消</Button>
-          <Button onClick={handleCreate} color="primary">
-            创建
+          <Button onClick={() => setCreateDialog(false)}>
+            {t('common.cancel')}
           </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>确认删除</DialogTitle>
-        <DialogContent>
-          <Typography>
-            确定要删除奖项 "{selectedPrize?.name}" 吗？
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialog(false)}>取消</Button>
-          <Button onClick={handleDelete} color="error">
-            确认删除
+          <Button onClick={handleCreate} variant="contained">
+            {t('common.submit')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
-        <DialogTitle>编辑奖项</DialogTitle>
+        <DialogTitle>{t('lottery.editPrize')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             {imagePreview && (
               <Box sx={{ textAlign: 'center' }}>
                 <img
                   src={imagePreview}
-                  alt="预览"
+                  alt="Preview"
                   style={{
                     maxWidth: '200px',
                     maxHeight: '200px',
@@ -319,28 +305,28 @@ const PrizeManagement: React.FC = () => {
               </Box>
             )}
             <TextField
-              label="名称"
+              label={t('lottery.prizeName')}
               value={editingPrize?.name || ''}
               onChange={(e) => setEditingPrize(prev => prev ? { ...prev, name: e.target.value } : null)}
               fullWidth
             />
             <TextField
               type="number"
-              label="总数量"
+              label={t('lottery.totalQuantity')}
               value={editingPrize?.totalQuantity || 0}
               onChange={(e) => setEditingPrize(prev => prev ? { ...prev, totalQuantity: parseInt(e.target.value) } : null)}
               fullWidth
             />
             <TextField
               type="number"
-              label="抽取数量"
+              label={t('lottery.drawQuantity')}
               value={editingPrize?.drawQuantity || 1}
               onChange={(e) => setEditingPrize(prev => prev ? {
                 ...prev,
-                drawQuantity: Math.min(24, Math.max(1, parseInt(e.target.value)))
+                drawQuantity: Math.min(20, Math.max(1, parseInt(e.target.value)))
               } : null)}
-              inputProps={{ min: 1, max: 24 }}
-              helperText="每轮抽奖数量范围：1-24"
+              inputProps={{ min: 1, max: 20 }}
+              helperText={t('lottery.drawQuantity') + ': 1-20'}
               fullWidth
             />
             <Button
@@ -348,7 +334,7 @@ const PrizeManagement: React.FC = () => {
               component="label"
               startIcon={<ImageIcon />}
             >
-              更换图片
+              {t('common.upload')}
               <input
                 type="file"
                 hidden
@@ -359,8 +345,29 @@ const PrizeManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog(false)}>取消</Button>
-          <Button onClick={handleEdit} color="primary">保存</Button>
+          <Button onClick={() => setEditDialog(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleEdit} variant="contained">
+            {t('common.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
+        <DialogTitle>{t('lottery.deletePrize')}</DialogTitle>
+        <DialogContent>
+          <Typography>
+            {t('lottery.confirmDeletePrize')}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleDelete} color="error">
+            {t('common.delete')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

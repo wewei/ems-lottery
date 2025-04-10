@@ -11,9 +11,11 @@ import {
   TextField
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../utils/axios';
 
 const AdvancedSettings: React.FC = () => {
+    const { t } = useTranslation();
     const [allowMultipleWins, setAllowMultipleWins] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -23,7 +25,7 @@ const AdvancedSettings: React.FC = () => {
                 const response = await api.get('/api/settings');
                 setAllowMultipleWins(response.data.allowMultipleWins);
             } catch (err) {
-                console.error('获取设置失败', err);
+                console.error(t('admin.fetchSettingsFailed'), err);
             }
         };
         fetchSettings();
@@ -35,42 +37,42 @@ const AdvancedSettings: React.FC = () => {
                 allowMultipleWins: !allowMultipleWins
             });
             setAllowMultipleWins(response.data.allowMultipleWins);
-            setMessage({ type: 'success', text: '设置已更新' });
+            setMessage({ type: 'success', text: t('admin.settingsUpdated') });
         } catch (err) {
-            setMessage({ type: 'error', text: '更新设置失败' });
+            setMessage({ type: 'error', text: t('admin.updateSettingsFailed') });
         }
     };
 
     const [resetDialog, setResetDialog] = useState(false);
     const [resetPasswordDialog, setResetPasswordDialog] = useState(false);
     const [resetConfirmation, setResetConfirmation] = useState('');
-    const RESET_CONFIRMATION_TEXT = '我确认重置数据';
+    const RESET_CONFIRMATION_TEXT = t('admin.resetConfirmationText');
 
     const handlePasswordReset = async () => {
         try {
             await api.post('/api/auth/reset-password');
-            alert('管理员已重置，请重新初始化');
+            alert(t('admin.passwordResetSuccess'));
             localStorage.removeItem('token');
             navigate('/login');
         } catch (err) {
-            alert('密码修改失败');
+            alert(t('admin.passwordResetFailed'));
         }
         setResetPasswordDialog(false);
     };
 
     const handleResetSystem = async () => {
         if (resetConfirmation !== RESET_CONFIRMATION_TEXT) {
-            alert('确认文本不匹配');
+            alert(t('admin.confirmationTextMismatch'));
             return;
         }
         
         try {
             await api.post('/api/settings/reset-system');
-            alert('系统已重置');
+            alert(t('admin.systemResetSuccess'));
             localStorage.removeItem('token');
             navigate('/login');
         } catch (err) {
-            alert('系统重置失败');
+            alert(t('admin.systemResetFailed'));
         }
         setResetDialog(false);
         setResetConfirmation('');
@@ -81,7 +83,7 @@ const AdvancedSettings: React.FC = () => {
     return (
         <Box>
             <Typography variant="h5" gutterBottom>
-                高级选项
+                {t('admin.settings')}
             </Typography>
 
             {message && (
@@ -102,18 +104,18 @@ const AdvancedSettings: React.FC = () => {
                             onChange={handleToggleMultipleWins}
                         />
                     }
-                    label="允许重复获奖"
+                    label={t('admin.allowMultipleWins')}
                 />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     {allowMultipleWins ?
-                        '用户可以获得多个不同奖项' :
-                        '用户只能获得一个奖项'}
+                        t('admin.multipleWinsEnabled') :
+                        t('admin.multipleWinsDisabled')}
                 </Typography>
             </Paper>
 
             <Paper sx={{ p: 3, mt: 3 }}>
                 <Typography variant="h6" color="error" gutterBottom>
-                    危险区域
+                    {t('admin.dangerZone')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexDirection: 'row' }}>
                     <Button
@@ -122,7 +124,7 @@ const AdvancedSettings: React.FC = () => {
                         onClick={() => setResetPasswordDialog(true)}
                         sx={{ mt: 2 }}
                     >
-                        重置管理员密码
+                        {t('admin.resetPassword')}
                     </Button>
 
                     <Button
@@ -131,21 +133,21 @@ const AdvancedSettings: React.FC = () => {
                         onClick={() => setResetDialog(true)}
                         sx={{ mt: 2 }}
                     >
-                        重置系统
+                        {t('admin.resetSystem')}
                     </Button>
                 </Box>
             </Paper>
             <Dialog open={resetPasswordDialog} onClose={() => setResetPasswordDialog(false)}>
-                <DialogTitle>确认重置密码</DialogTitle>
+                <DialogTitle>{t('admin.confirmResetPassword')}</DialogTitle>
                 <DialogContent>
                     <Typography>
-                        确定要重置管理员密码吗？重置后将返回登录页面。
+                        {t('admin.confirmResetPasswordMessage')}
                     </Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setResetPasswordDialog(false)}>取消</Button>
+                    <Button onClick={() => setResetPasswordDialog(false)}>{t('common.cancel')}</Button>
                     <Button onClick={handlePasswordReset} color="warning">
-                        确认重置
+                        {t('admin.confirmReset')}
                     </Button>
                 </DialogActions>
             </Dialog>
@@ -157,19 +159,19 @@ const AdvancedSettings: React.FC = () => {
                     setResetConfirmation('');
                 }}
             >
-                <DialogTitle>系统重置确认</DialogTitle>
+                <DialogTitle>{t('admin.systemResetConfirm')}</DialogTitle>
                 <DialogContent>
                     <Typography color="error" paragraph sx={{ mt: 2 }}>
-                        警告：此操作将删除所有数据！包括：
+                        {t('admin.systemResetWarning')}
                     </Typography>
                     <ul>
-                        <li>所有用户信息</li>
-                        <li>所有奖品设置</li>
-                        <li>所有抽奖记录</li>
-                        <li>所有系统设置</li>
+                        <li>{t('admin.resetData.userInfo')}</li>
+                        <li>{t('admin.resetData.prizeSettings')}</li>
+                        <li>{t('admin.resetData.drawRecords')}</li>
+                        <li>{t('admin.resetData.systemSettings')}</li>
                     </ul>
                     <Typography paragraph>
-                        此操作不可撤销！如果确定要重置系统，请在下方输入：
+                        {t('admin.systemResetIrreversible')}
                     </Typography>
                     <Typography
                         component="div"
@@ -187,12 +189,12 @@ const AdvancedSettings: React.FC = () => {
                         fullWidth
                         value={resetConfirmation}
                         onChange={(e) => setResetConfirmation(e.target.value)}
-                        placeholder="请输入确认文本"
+                        placeholder={t('admin.enterConfirmationText')}
                         error={resetConfirmation !== '' && resetConfirmation !== RESET_CONFIRMATION_TEXT}
                         helperText={
                             resetConfirmation !== '' &&
                             resetConfirmation !== RESET_CONFIRMATION_TEXT &&
-                            '确认文本不匹配'
+                            t('admin.confirmationTextMismatch')
                         }
                     />
                 </DialogContent>
@@ -203,14 +205,14 @@ const AdvancedSettings: React.FC = () => {
                             setResetConfirmation('');
                         }}
                     >
-                        取消
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         onClick={handleResetSystem}
                         color="error"
                         disabled={resetConfirmation !== RESET_CONFIRMATION_TEXT}
                     >
-                        确认重置
+                        {t('admin.confirmReset')}
                     </Button>
                 </DialogActions>
             </Dialog>

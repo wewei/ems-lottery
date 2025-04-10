@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Box, IconButton, Fade, Typography } from '@mui/material';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { QRCodeSVG } from 'qrcode.react';
+import { useTranslation } from 'react-i18next';
 
 interface FloatingQRCodeProps {
   url: string;
 }
 
 const FloatingQRCode: React.FC<FloatingQRCodeProps> = ({ url }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -70,7 +72,7 @@ const FloatingQRCode: React.FC<FloatingQRCodeProps> = ({ url }) => {
             }}
           >
             <Typography variant="h4" gutterBottom align="center">
-              请扫描二维码激活账号
+              {t('activate.scanQRCode')}
             </Typography>
             <QRCodeSVG value={url} size={500} />
           </Box>

@@ -25,6 +25,7 @@ import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import { useTranslation } from 'react-i18next';
 import api from '../../utils/axios';
 
 interface User {
@@ -35,6 +36,7 @@ interface User {
 }
 
 const UserManagement: React.FC = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -74,7 +76,7 @@ const UserManagement: React.FC = () => {
       setUsers(response.data.users);
       setTotal(response.data.total);
     } catch (err) {
-      console.error('获取用户列表失败', err);
+      console.error(t('user.fetchFailed'), err);
     }
   };
 
@@ -119,12 +121,12 @@ const UserManagement: React.FC = () => {
           const response = await api.post('/api/users/preview-import', { users: rows });
           setImportPreview(response.data);
         } catch (err) {
-          alert('解析文件失败');
+          alert(t('user.parseFailed'));
         }
       };
       reader.readAsText(selectedFile);
     } catch (err) {
-      alert('读取文件失败');
+      alert(t('user.readFailed'));
     }
   };
 
@@ -139,9 +141,9 @@ const UserManagement: React.FC = () => {
       setImportPreview(null);
       setSelectedFile(null);
       fetchUsers();
-      alert('导入成功');
+      alert(t('user.importSuccess'));
     } catch (err) {
-      alert('导入失败');
+      alert(t('user.importFailed'));
     }
   };
 
@@ -151,7 +153,7 @@ const UserManagement: React.FC = () => {
       fetchUsers();
       setDeleteDialog(false);
     } catch (err) {
-      alert('删除失败');
+      alert(t('user.deleteFailed'));
     }
   };
 
@@ -164,7 +166,7 @@ const UserManagement: React.FC = () => {
       fetchUsers();
       setBatchDeleteDialog(false);
     } catch (err) {
-      alert('批量删除失败');
+      alert(t('user.batchDeleteFailed'));
     }
   };
 
@@ -177,7 +179,7 @@ const UserManagement: React.FC = () => {
       }
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || `${user.isActive ? '取消激活' : '激活'}失败`);
+      alert(err.response?.data?.message || t(user.isActive ? 'user.deactivateFailed' : 'user.activateFailed'));
     }
   };
 
@@ -193,7 +195,7 @@ const UserManagement: React.FC = () => {
       setEditingUser(null);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || '更新用户失败');
+      alert(err.response?.data?.message || t('user.updateFailed'));
     }
   };
 
@@ -204,7 +206,7 @@ const UserManagement: React.FC = () => {
       setNewUser({ alias: '', nickname: '' });
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || '创建用户失败');
+      alert(err.response?.data?.message || t('user.createFailed'));
     }
   };
 
@@ -216,21 +218,21 @@ const UserManagement: React.FC = () => {
         .map(user => user!.alias);
 
       if (aliases.length === 0) {
-        alert('没有需要激活的用户');
+        alert(t('user.noUsersToActivate'));
         return;
       }
 
       const response = await api.post('/api/users/batch-activate', { aliases });
       
       if (response.data.activated.length > 0) {
-        alert(`成功激活 ${response.data.activated.length} 个用户`);
+        alert(t('user.batchActivateSuccess', { count: response.data.activated.length }));
       }
 
       setSelectedUsers([]);
       fetchUsers();
       setBatchActivateDialog(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || '批量激活失败');
+      alert(err.response?.data?.message || t('user.batchActivateFailed'));
     }
   };
 
@@ -242,21 +244,21 @@ const UserManagement: React.FC = () => {
         .map(user => user!.alias);
 
       if (aliases.length === 0) {
-        alert('没有需要取消激活的用户');
+        alert(t('user.noUsersToDeactivate'));
         return;
       }
 
       const response = await api.post('/api/users/batch-deactivate', { aliases });
 
       if (response.data.deactivated.length > 0) {
-        alert(`成功取消激活 ${response.data.deactivated.length} 个用户`);
+        alert(t('user.batchDeactivateSuccess', { count: response.data.deactivated.length }));
       }
 
       setSelectedUsers([]);
       fetchUsers();
       setBatchDeactivateDialog(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || '批量取消激活失败');
+      alert(err.response?.data?.message || t('user.batchDeactivateFailed'));
     }
   };
 
@@ -266,7 +268,7 @@ const UserManagement: React.FC = () => {
       alert(response.data.message);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || '生成测试用户失败');
+      alert(err.response?.data?.message || t('user.generateTestFailed'));
     }
   };
 
@@ -276,29 +278,29 @@ const UserManagement: React.FC = () => {
       alert(response.data.message);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || '删除测试用户失败');
+      alert(err.response?.data?.message || t('user.deleteTestFailed'));
     }
   };
 
   const handleActivateAll = async () => {
     try {
       const response = await api.post('/api/users/activate-all');
-      alert(`成功激活 ${response.data.activated} 个用户`);
+      alert(t('user.activateAllSuccess', { count: response.data.activated }));
       fetchUsers();
       setActivateAllDialog(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || '全部激活失败');
+      alert(err.response?.data?.message || t('user.activateAllFailed'));
     }
   };
 
   const handleDeactivateAll = async () => {
     try {
       const response = await api.post('/api/users/deactivate-all');
-      alert(`成功取消激活 ${response.data.deactivated} 个用户`);
+      alert(t('user.deactivateAllSuccess', { count: response.data.deactivated }));
       fetchUsers();
       setDeactivateAllDialog(false);
     } catch (err: any) {
-      alert(err.response?.data?.message || '全部取消激活失败');
+      alert(err.response?.data?.message || t('user.deactivateAllFailed'));
     }
   };
 
@@ -306,7 +308,7 @@ const UserManagement: React.FC = () => {
     <Box>
       <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
-          label="搜索"
+          label={t('common.search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
@@ -317,7 +319,7 @@ const UserManagement: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={handleGenerateTestUsers}
         >
-          生成测试用户
+          {t('user.generateTest')}
         </Button>
         <Button
           variant="contained"
@@ -325,20 +327,20 @@ const UserManagement: React.FC = () => {
           startIcon={<CleaningServicesIcon />}
           onClick={handleDeleteTestUsers}
         >
-          清理测试用户
+          {t('user.cleanTest')}
         </Button>
         <Button
           variant="contained"
           onClick={() => setCreateDialog(true)}
         >
-          创建用户
+          {t('user.create')}
         </Button>
         <Button
           variant="contained"
           component="label"
           startIcon={<CloudUploadIcon />}
         >
-          导入用户
+          {t('user.import')}
           <input
             type="file"
             hidden
@@ -352,7 +354,7 @@ const UserManagement: React.FC = () => {
             color="primary"
             onClick={handleImport}
           >
-            预览导入
+            {t('user.previewImport')}
           </Button>
         )}
         <Button
@@ -360,14 +362,14 @@ const UserManagement: React.FC = () => {
           color="success"
           onClick={() => setActivateAllDialog(true)}
         >
-          全部激活
+          {t('user.activateAll')}
         </Button>
         <Button
           variant="contained"
           color="warning"
           onClick={() => setDeactivateAllDialog(true)}
         >
-          全部取消激活
+          {t('user.deactivateAll')}
         </Button>
         {selectedUsers.length > 0 && (
           <>
@@ -377,7 +379,7 @@ const UserManagement: React.FC = () => {
               startIcon={<DeleteSweepIcon />}
               onClick={() => setBatchDeleteDialog(true)}
             >
-              批量删除
+              {t('user.batchDelete')}
             </Button>
             <Button
               variant="contained"
@@ -387,7 +389,7 @@ const UserManagement: React.FC = () => {
                 users.find(u => u._id === id && !u.isActive)
               )}
             >
-              批量激活
+              {t('user.batchActivate')}
             </Button>
             <Button
               variant="contained"
@@ -397,7 +399,7 @@ const UserManagement: React.FC = () => {
                 users.find(u => u._id === id && u.isActive)
               )}
             >
-              批量取消激活
+              {t('user.batchDeactivate')}
             </Button>
           </>
         )}
@@ -420,10 +422,10 @@ const UserManagement: React.FC = () => {
                   }}
                 />
               </TableCell>
-              <TableCell>别名</TableCell>
-              <TableCell>昵称</TableCell>
-              <TableCell align="center">激活状态</TableCell>
-              <TableCell align="center">操作</TableCell>
+              <TableCell>{t('user.alias')}</TableCell>
+              <TableCell>{t('user.nickname')}</TableCell>
+              <TableCell align="center">{t('user.status')}</TableCell>
+              <TableCell align="center">{t('common.edit')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -458,7 +460,7 @@ const UserManagement: React.FC = () => {
                       setEditingUser(user);
                       setEditDialog(true);
                     }}
-                    title="编辑"
+                    title={t('user.edit')}
                   >
                     <EditIcon />
                   </IconButton>
@@ -468,7 +470,7 @@ const UserManagement: React.FC = () => {
                       setSelectedUsers([user._id]);
                       setDeleteDialog(true);
                     }}
-                    title="删除"
+                    title={t('user.delete')}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -490,68 +492,68 @@ const UserManagement: React.FC = () => {
       />
 
       <Dialog open={!!importPreview} onClose={() => setImportPreview(null)}>
-        <DialogTitle>导入预览</DialogTitle>
+        <DialogTitle>{t('user.importPreview')}</DialogTitle>
         <DialogContent>
           <Box>
             <Typography variant="subtitle1">
-              新增用户: {importPreview?.newUsers.length || 0}
+              {t('user.newUsers')}: {importPreview?.newUsers.length || 0}
             </Typography>
             <Typography variant="subtitle1">
-              更新用户: {importPreview?.updateUsers.length || 0}
+              {t('user.updateUsers')}: {importPreview?.updateUsers.length || 0}
             </Typography>
             <Typography variant="subtitle1">
-              无变化: {importPreview?.unchangedUsers.length || 0}
+              {t('user.unchangedUsers')}: {importPreview?.unchangedUsers.length || 0}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setImportPreview(null)}>取消</Button>
+          <Button onClick={() => setImportPreview(null)}>{t('common.cancel')}</Button>
           <Button onClick={handleConfirmImport} color="primary">
-            确认导入
+            {t('user.confirmImport')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
-        <DialogTitle>确认删除</DialogTitle>
+        <DialogTitle>{t('user.confirmDelete')}</DialogTitle>
         <DialogContent>
-          <Typography>确定要删除该用户吗？</Typography>
+          <Typography>{t('user.confirmDeleteMessage')}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog(false)}>取消</Button>
+          <Button onClick={() => setDeleteDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => handleDelete(users[0]._id)} color="error">
-            确认删除
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={batchDeleteDialog} onClose={() => setBatchDeleteDialog(false)}>
-        <DialogTitle>确认批量删除</DialogTitle>
+        <DialogTitle>{t('user.confirmBatchDelete')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要删除选中的 {selectedUsers.length} 个用户吗？
+            {t('user.confirmBatchDeleteMessage', { count: selectedUsers.length })}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBatchDeleteDialog(false)}>取消</Button>
+          <Button onClick={() => setBatchDeleteDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleBatchDelete} color="error">
-            确认删除
+            {t('common.delete')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={editDialog} onClose={() => setEditDialog(false)}>
-        <DialogTitle>编辑用户</DialogTitle>
+        <DialogTitle>{t('user.edit')}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
             <TextField
-              label="别名"
+              label={t('user.alias')}
               value={editingUser?.alias || ''}
               onChange={(e) => setEditingUser(prev => prev ? { ...prev, alias: e.target.value } : null)}
               fullWidth
             />
             <TextField
-              label="昵称"
+              label={t('user.nickname')}
               value={editingUser?.nickname || ''}
               onChange={(e) => setEditingUser(prev => prev ? { ...prev, nickname: e.target.value } : null)}
               fullWidth
@@ -559,24 +561,24 @@ const UserManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditDialog(false)}>取消</Button>
-          <Button onClick={handleEdit} color="primary">保存</Button>
+          <Button onClick={() => setEditDialog(false)}>{t('common.cancel')}</Button>
+          <Button onClick={handleEdit} color="primary">{t('common.save')}</Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={createDialog} onClose={() => setCreateDialog(false)}>
-        <DialogTitle>创建用户</DialogTitle>
+        <DialogTitle>{t('user.create')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="别名"
+              label={t('user.alias')}
               value={newUser.alias}
               onChange={(e) => setNewUser(prev => ({ ...prev, alias: e.target.value }))}
               fullWidth
               required
             />
             <TextField
-              label="昵称"
+              label={t('user.nickname')}
               value={newUser.nickname}
               onChange={(e) => setNewUser(prev => ({ ...prev, nickname: e.target.value }))}
               fullWidth
@@ -585,76 +587,76 @@ const UserManagement: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialog(false)}>取消</Button>
+          <Button onClick={() => setCreateDialog(false)}>{t('common.cancel')}</Button>
           <Button 
             onClick={handleCreateUser}
             disabled={!newUser.alias || !newUser.nickname}
           >
-            创建
+            {t('user.create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={batchActivateDialog} onClose={() => setBatchActivateDialog(false)}>
-        <DialogTitle>确认批量激活</DialogTitle>
+        <DialogTitle>{t('user.confirmBatchActivate')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要激活选中的 {selectedUsers.length} 个用户吗？
+            {t('user.confirmBatchActivateMessage', { count: selectedUsers.length })}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBatchActivateDialog(false)}>取消</Button>
+          <Button onClick={() => setBatchActivateDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleBatchActivate} color="success">
-            确认激活
+            {t('user.activate')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={batchDeactivateDialog} onClose={() => setBatchDeactivateDialog(false)}>
-        <DialogTitle>确认批量取消激活</DialogTitle>
+        <DialogTitle>{t('user.confirmBatchDeactivate')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要取消激活选中的 {
-              selectedUsers.filter(id => 
+            {t('user.confirmBatchDeactivateMessage', { 
+              count: selectedUsers.filter(id => 
                 users.find(u => u._id === id && u.isActive)
-              ).length
-            } 个用户吗？
+              ).length 
+            })}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBatchDeactivateDialog(false)}>取消</Button>
+          <Button onClick={() => setBatchDeactivateDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleBatchDeactivate} color="warning">
-            确认取消激活
+            {t('user.deactivate')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={activateAllDialog} onClose={() => setActivateAllDialog(false)}>
-        <DialogTitle>确认全部激活</DialogTitle>
+        <DialogTitle>{t('user.confirmActivateAll')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要激活所有未激活的用户吗？
+            {t('user.confirmActivateAllMessage')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setActivateAllDialog(false)}>取消</Button>
+          <Button onClick={() => setActivateAllDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleActivateAll} color="success">
-            确认激活
+            {t('user.activate')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={deactivateAllDialog} onClose={() => setDeactivateAllDialog(false)}>
-        <DialogTitle>确认全部取消激活</DialogTitle>
+        <DialogTitle>{t('user.confirmDeactivateAll')}</DialogTitle>
         <DialogContent>
           <Typography>
-            确定要取消激活所有已激活的用户吗？
+            {t('user.confirmDeactivateAllMessage')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeactivateAllDialog(false)}>取消</Button>
+          <Button onClick={() => setDeactivateAllDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={handleDeactivateAll} color="warning">
-            确认取消激活
+            {t('user.deactivate')}
           </Button>
         </DialogActions>
       </Dialog>

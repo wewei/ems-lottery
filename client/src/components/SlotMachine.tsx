@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Typography, Button, Card, CardContent } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface SlotMachineProps {
   users: Array<{
@@ -52,6 +53,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
   onStop,
   onReturn
 }) => {
+  const { t } = useTranslation();
   const [currentIndexes, setCurrentIndexes] = useState<number[]>([]);
   const [winners, setWinners] = useState<{ nickname: string; alias: string }[] | null>(null);
   const selectedUsers = winners || currentIndexes.map(index => users[index]);
@@ -251,7 +253,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
               borderRadius: 2
             }}
           >
-            停止抽奖
+            {t('lottery.stop')}
           </Button>
         )}
         {!isSpinning && (
@@ -267,7 +269,7 @@ const SlotMachine: React.FC<SlotMachineProps> = ({
               borderRadius: 2
             }}
           >
-            返回
+            {t('common.return')}
           </Button>
         )}
       </Box>

@@ -10,6 +10,7 @@ import {
   Button
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../utils/axios';
 import Header from '../components/Header';
 import FloatingQRCode from '../components/FloatingQRCode';
@@ -28,6 +29,7 @@ interface Stats {
 }
 
 const Lottery: React.FC = () => {
+  const { t } = useTranslation();
   const [prizes, setPrizes] = useState<Prize[]>([]);
   const [stats, setStats] = useState<Stats>({ activeUserCount: 0 });
   const navigate = useNavigate();
@@ -55,7 +57,7 @@ const Lottery: React.FC = () => {
           localStorage.removeItem('token');
           navigate('/login');
         }
-        console.error('获取奖项列表失败', err);
+        console.error(t('lottery.fetchPrizesFailed'), err);
       }
     };
 
@@ -68,14 +70,14 @@ const Lottery: React.FC = () => {
 
   return (
     <>
-      <Header title="抽奖" />
+      <Header title={t('lottery.title')} />
       <Container>
         <Box sx={{ mt: 4, mb: 4 }}>
           <Typography variant="h4" gutterBottom align="center">
-            抽奖
+            {t('lottery.title')}
           </Typography>
           <Typography variant="subtitle1" align="center" color="text.secondary">
-            当前已激活用户: {stats.activeUserCount} 人
+            {t('lottery.activeUsers')}: {stats.activeUserCount} {t('common.people')}
           </Typography>
         </Box>
         <Grid container spacing={3}>
@@ -113,10 +115,10 @@ const Lottery: React.FC = () => {
                     {prize.name}
                   </Typography>
                   <Typography>
-                    剩余数量: {prize.remaining}
+                    {t('lottery.remaining')}: {prize.remaining}
                   </Typography>
                   <Typography>
-                    每次抽取: {prize.drawQuantity}
+                    {t('lottery.drawQuantity')}: {prize.drawQuantity}
                   </Typography>
                   <Button
                     variant="contained"
@@ -124,9 +126,9 @@ const Lottery: React.FC = () => {
                     sx={{ mt: 2 }}
                     disabled={prize.remaining === 0 || stats.activeUserCount < prize.drawQuantity}
                   >
-                    {prize.remaining === 0 ? '已抽完' : 
+                    {prize.remaining === 0 ? t('lottery.noPrize') : 
                      stats.activeUserCount < prize.drawQuantity ? 
-                     '激活用户不足' : '开始抽奖'}
+                     t('lottery.notEnoughUsers') : t('lottery.start')}
                   </Button>
                 </CardContent>
               </Card>

@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { Container, Box, Paper, Tabs, Tab } from '@mui/material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // 根据当前路径设置选中的标签
   const getCurrentTab = () => {
@@ -59,15 +61,15 @@ const Admin: React.FC = () => {
 
   return (
     <>
-      <Header title="管理后台" />
+      <Header title={t('common.admin')} />
       <Container>
         <Box sx={{ width: '100%', mt: 4 }}>
           <Paper>
             <Tabs value={getCurrentTab()} onChange={handleTabChange}>
-              <Tab label="奖项管理" />
-              <Tab label="用户管理" />
-              <Tab label="抽奖记录" />
-              <Tab label="高级选项" />
+              <Tab label={t('lottery.management')} />
+              <Tab label={t('user.management')} />
+              <Tab label={t('drawRecord.management')} />
+              <Tab label={t('admin.settings')} />
             </Tabs>
             <Box sx={{ p: 3 }}>
               <Outlet />

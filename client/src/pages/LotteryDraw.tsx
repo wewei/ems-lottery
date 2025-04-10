@@ -12,6 +12,7 @@ import {
   DialogActions
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../utils/axios';
 import Header from '../components/Header';
 import SlotMachine from '../components/SlotMachine';
@@ -40,6 +41,7 @@ interface ActiveUser {
 }
 
 const LotteryDraw: React.FC = () => {
+  const { t } = useTranslation();
   const { prizeId } = useParams<{ prizeId: string }>();
   const navigate = useNavigate();
   const [prize, setPrize] = useState<Prize | null>(null);
@@ -72,7 +74,7 @@ const LotteryDraw: React.FC = () => {
         setStats(statsRes.data);
         setActiveUsers(usersRes.data.users);
       } catch (err) {
-        console.error('获取奖项信息失败', err);
+        console.error(t('lottery.fetchPrizeFailed'), err);
         navigate('/lottery');
       }
     };
@@ -109,7 +111,7 @@ const LotteryDraw: React.FC = () => {
       setStats(statsRes.data);
       setActiveUsers(usersRes.data.users);
     } catch (err: any) {
-      alert(err.response?.data?.message || '抽奖失败');
+      alert(err.response?.data?.message || t('lottery.drawFailed'));
     } finally {
       setIsDrawing(false);
     }
@@ -122,11 +124,11 @@ const LotteryDraw: React.FC = () => {
   };
 
   const getButtonText = () => {
-    if (isDrawing) return '抽奖中...';
-    if (!prize) return '加载中...';
-    if (prize.remaining <= 0) return '已抽完';
-    if (stats.activeUserCount < Math.min(prize.drawQuantity, prize.remaining)) return '激活用户不足';
-    return '开始抽奖';
+    if (isDrawing) return t('lottery.drawing');
+    if (!prize) return t('common.loading');
+    if (prize.remaining <= 0) return t('lottery.noPrize');
+    if (stats.activeUserCount < Math.min(prize.drawQuantity, prize.remaining)) return t('lottery.notEnoughUsers');
+    return t('lottery.start');
   };
 
   if (!prize) {
@@ -135,12 +137,12 @@ const LotteryDraw: React.FC = () => {
 
   return (
     <>
-      <Header title={prize?.name || '抽奖'} />
+      <Header title={prize?.name || t('lottery.title')} />
       <Container>
         <Box sx={{ mt: 2, mb: -2 }}>
           <IconButton 
             onClick={() => navigate('/lottery')}
-            title="返回抽奖列表"
+            title={t('common.back')}
           >
             <ArrowBackIcon />
           </IconButton>
@@ -163,13 +165,13 @@ const LotteryDraw: React.FC = () => {
           </Box>
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" gutterBottom>
-              剩余数量: {prize.remaining}
+              {t('lottery.remaining')}: {prize.remaining}
             </Typography>
             <Typography variant="h6" gutterBottom>
-              本次将抽取: {Math.min(prize.drawQuantity, prize.remaining)} 个
+              {t('lottery.drawQuantity')}: {Math.min(prize.drawQuantity, prize.remaining)} {t('common.people')}
             </Typography>
             <Typography variant="h6" gutterBottom color="text.secondary">
-               参与抽奖用户: {activeUsers.length} 人
+              {t('lottery.activeUsers')}: {activeUsers.length} {t('common.people')}
             </Typography>
             <Button
               variant="contained"
