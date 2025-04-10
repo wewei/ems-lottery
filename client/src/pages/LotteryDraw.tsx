@@ -94,6 +94,10 @@ const LotteryDraw: React.FC = () => {
   const handleSlotMachineStop = async (users: ActiveUser[]) => {
     try {
       console.log('users', users);
+      setPrize(prize ? {
+        ...prize,
+        remaining: prize.remaining - users.length
+      } : null);
       const response = await api.post(`/api/lottery/draw/${prizeId}`, {
         winners: users
       });
