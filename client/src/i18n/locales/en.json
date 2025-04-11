@@ -42,7 +42,7 @@
   },
   "lottery": {
     "title": "Lottery",
-    "start": "Start Lottery",
+    "start": "Go!",
     "stop": "Stop",
     "drawing": "Drawing...",
     "result": "Lottery Result",
