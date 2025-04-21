@@ -156,6 +156,7 @@ router.post('/batch-import', authenticateToken as RequestHandler, (async (req: R
 
     res.json({ message: '导入成功' });
   } catch (err) {
+    console.error('批量导入用户失败:', err);
     res.status(500).json({ message: '服务器错误' });
   }
 }) as RequestHandler);
@@ -376,33 +377,6 @@ router.get('/active', (async (req: Request, res: Response) => {
     res.json({ users });
   } catch (err) {
     res.status(500).json({ message: '获取用户列表失败' });
-  }
-}) as RequestHandler);
-
-// 导入用户
-router.post('/import', upload.single('file'), (async (req: Request, res: Response) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: '未上传文件' });
-    }
-
-    const fileContent = fs.readFileSync(req.file.path, 'utf-8');
-    // 支持 \r\n (Windows), \n (Unix), \r (Mac) 换行符
-    const rows = fileContent.split(/\r\n|\r|\n/)
-      .filter(row => row.trim())
-      // 跳过第一行 header
-      .slice(1)
-      .map(row => {
-        const [alias, nickname] = row
-          .split(',')
-          .map(field => field.trim().replace(/^["']|["']$/g, ''));
-        return { alias, nickname };
-      })
-      .filter(({ alias, nickname }) => alias && nickname);
-
-    // ... 其他代码
-  } catch (err) {
-    res.status(500).json({ message: '导入失败' });
   }
 }) as RequestHandler);
 
